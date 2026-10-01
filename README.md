@@ -10,9 +10,6 @@ Full-stack NGO management platform: **React + Node/Express + MongoDB Atlas**.
     ├── backend/    Express API - config, models, routes, controllers, middleware, seeds, utils
     └── docs/       (ER/data model, API docs - coming later)
 
-## Quick start
-See [SETUP_STEP1.md](SETUP_STEP1.md).
-
 ## Tech
 React 18, React Router 6, Axios, Vite - Express 4, Mongoose 8, cors, dotenv - MongoDB Atlas
 

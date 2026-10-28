@@ -12,35 +12,10 @@ Full-stack NGO management platform: **React + Node/Express + MongoDB Atlas**.
     └── package.json Root helper scripts for running both apps
 
 ## Quick start
-1. Install dependencies:
-   ```bash
-   npm run install:all
-   ```
-   Or separately:
-   ```bash
-   cd backend && npm install
-   cd ../frontend && npm install
-   ```
-2. Start the backend:
-   ```bash
-   cd backend && npm run dev
-   ```
-3. Start the frontend:
-   ```bash
-   cd frontend && npm run dev
-   ```
-4. Open http://localhost:5173
+See [SETUP_STEP1.md](SETUP_STEP1.md).
 
-## Authentication & Pre-configured Test Accounts
-The system features JWT authentication, bcrypt password hashing, and Role-Based Access Control (RBAC):
-
-| Role | Email | Password | Access Level |
-|---|---|---|---|
-| **Admin** | `admin@sahyog.org` | `Admin@123` | Full system administration and access |
-| **Staff** | `staff@sahyog.org` | `Staff@123` | Operational management |
-| **Volunteer** | `volunteer@sahyog.org` | `Volunteer@123` | Profile and participation |
-
-*(On the login page, you can also click the quick-fill pills to instantly load any test account).*
+## Tech
+React 18, React Router 6, Axios, Vite - Express 4, Mongoose 8, cors, dotenv - MongoDB Atlas
 
 ## Conventions
 - Every API response: `{ success, message, data }`

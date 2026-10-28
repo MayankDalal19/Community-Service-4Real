@@ -1,11 +1,17 @@
 import { useNavigate } from "react-router-dom";
+import { useAuth } from "../context/AuthContext";
 import Icon from "./Icon";
 
 export default function Navbar({ title, onMenuClick }) {
   const navigate = useNavigate();
+  const { user, logout } = useAuth();
 
-  // Real logout (clearing the JWT) arrives in Step 3. For now it returns to the login page.
-  const handleLogout = () => navigate("/login");
+  const handleLogout = () => {
+    logout();
+    navigate("/login", { replace: true });
+  };
+
+  const initial = user?.fullName ? user.fullName.charAt(0).toUpperCase() : "U";
 
   return (
     <header className="navbar">
@@ -22,14 +28,20 @@ export default function Navbar({ title, onMenuClick }) {
       </div>
 
       <div className="navbar__right">
-        <div className="user-chip" title="Signed-in user (placeholder until Step 3)">
-          <span className="user-chip__avatar">A</span>
+        <div className="user-chip" title={`Signed in as ${user?.email || "user"}`}>
+          <span className="user-chip__avatar">{initial}</span>
           <div className="user-chip__info">
-            <span className="user-chip__name">Admin User</span>
-            <span className="user-chip__role">Administrator</span>
+            <span className="user-chip__name">{user?.fullName || "User"}</span>
+            <span className="user-chip__role">{user?.role || "Member"}</span>
           </div>
         </div>
-        <button type="button" className="icon-btn" onClick={handleLogout} aria-label="Log out" title="Log out">
+        <button
+          type="button"
+          className="icon-btn"
+          onClick={handleLogout}
+          aria-label="Log out"
+          title="Sign out of SAHYOG"
+        >
           <Icon name="logout" />
         </button>
       </div>

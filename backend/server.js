@@ -6,6 +6,7 @@ const cors = require("cors");
 const routes = require("./routes");
 const { connectDB } = require("./config/db");
 const { ensureRoles } = require("./seeds/roles");
+const { ensureDefaultUsers } = require("./seeds/users");
 const { notFound, errorHandler } = require("./middleware/errorHandler");
 
 const app = express();
@@ -38,8 +39,10 @@ app.listen(PORT, async () => {
   try {
     await connectDB();
     console.log(`MongoDB Atlas connected  (database: ${process.env.DB_NAME || "sahyog_db"})`);
-    const total = await ensureRoles();
-    console.log(`Roles ready (${total})\n`);
+    const totalRoles = await ensureRoles();
+    const userSeed = await ensureDefaultUsers();
+    console.log(`Roles ready (${totalRoles})`);
+    console.log(`Default users ready (${userSeed.total} total, ${userSeed.newlyCreated} created)\n`);
   } catch (err) {
     console.error(`MongoDB NOT connected: ${err.message}`);
     console.error("Check MONGODB_URI in backend/.env, your Atlas database user, and Network Access (IP allow list).\n");

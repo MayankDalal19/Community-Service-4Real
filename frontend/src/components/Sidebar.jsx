@@ -56,7 +56,7 @@ export default function Sidebar({ open, onClose }) {
 
         <div className="sidebar__footer">
           <span>SAHYOG v1.0</span>
-          <span>Step 1 · Foundation</span>
+          <span>Auth & RBAC Active</span>
         </div>
       </aside>
     </>

@@ -1,6 +1,7 @@
 const mongoose = require("mongoose");
+const bcrypt = require("bcryptjs");
 
-// passwordHash is filled by bcrypt in Step 3 and never returned by default queries.
+// passwordHash is hashed by bcrypt and never returned by default queries.
 const userSchema = new mongoose.Schema(
   {
     fullName: { type: String, required: true, trim: true, maxlength: 100 },
@@ -20,4 +21,10 @@ const userSchema = new mongoose.Schema(
   { timestamps: true }
 );
 
+// Compare candidate password with stored hash
+userSchema.methods.matchPassword = async function (candidatePassword) {
+  return bcrypt.compare(candidatePassword, this.passwordHash);
+};
+
 module.exports = mongoose.model("User", userSchema);
+

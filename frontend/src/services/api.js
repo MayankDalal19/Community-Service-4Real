@@ -8,6 +8,18 @@ const api = axios.create({
   headers: { "Content-Type": "application/json" },
 });
 
+// Request interceptor: automatically attach Authorization header if token exists
+api.interceptors.request.use(
+  (config) => {
+    const token = localStorage.getItem("sahyog_token");
+    if (token) {
+      config.headers.Authorization = `Bearer ${token}`;
+    }
+    return config;
+  },
+  (error) => Promise.reject(error)
+);
+
 // Success: unwrap Axios so callers receive the backend body directly:
 //   { success: true, message: "...", data: {...} }
 api.interceptors.response.use(

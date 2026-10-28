@@ -1,6 +1,7 @@
 import StatCard from "../components/StatCard";
 import ConnectionTest from "../components/ConnectionTest";
 import Icon from "../components/Icon";
+import { useAuth } from "../context/AuthContext";
 
 const STATS = [
   { icon: "volunteers", label: "Volunteers", tone: "teal" },
@@ -14,20 +15,22 @@ const STATS = [
 const ROADMAP = [
   { step: "Step 1", title: "Foundation", text: "React + Express + MongoDB Atlas connected, base UI", status: "done" },
   { step: "Step 2", title: "Core NGO Management", text: "Volunteers, donors, donations, beneficiaries, events", status: "next" },
-  { step: "Step 3", title: "Professional Features", text: "JWT, roles, analytics, reports, audit logs", status: "later" },
+  { step: "Step 3", title: "Authentication & Security", text: "JWT auth, password hashing, RBAC, session protection", status: "done" },
 ];
 
 const STATUS_LABEL = { done: "Complete", next: "Up next", later: "Planned" };
 
 export default function Dashboard() {
+  const { user } = useAuth();
+
   return (
     <div className="page">
       <section className="welcome">
         <div>
-          <h2>Welcome to SAHYOG</h2>
+          <h2>Welcome back, {user?.fullName || "Team Member"}</h2>
           <p>
-            Your NGO management system foundation is ready. Live numbers will appear here once
-            the modules are built.
+            You are signed in as <strong>{user?.role}</strong> ({user?.email}).
+            Authentication, JWT tokens, and role-based permissions are active.
           </p>
         </div>
       </section>

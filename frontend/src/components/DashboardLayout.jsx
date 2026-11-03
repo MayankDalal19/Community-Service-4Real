@@ -2,9 +2,11 @@ import { useEffect, useState } from "react";
 import { Outlet, useLocation } from "react-router-dom";
 import Sidebar from "./Sidebar";
 import Navbar from "./Navbar";
+import { MODULES } from "../config/modules";
 
 const TITLES = {
   "/dashboard": "Dashboard",
+  ...Object.fromEntries(Object.values(MODULES).map((m) => [`/${m.path}`, m.title])),
 };
 
 // Shell shared by every logged-in page: Sidebar + Navbar + page content.

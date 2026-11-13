@@ -1,4 +1,5 @@
 import { useEffect, useState } from "react";
+import { Link } from "react-router-dom";
 import StatCard from "../components/StatCard";
 import ConnectionTest from "../components/ConnectionTest";
 import Icon from "../components/Icon";
@@ -15,18 +16,12 @@ const STATS = [
   { icon: "assistance", label: "Assistance Records", tone: "green", key: "assistance" },
 ];
 
-const ROADMAP = [
-  { step: "Step 1", title: "Foundation", text: "React + Express + MongoDB Atlas connected, base UI", status: "done" },
-  { step: "Step 2", title: "Core NGO Management", text: "Volunteers, donors, donations, beneficiaries, events", status: "done" },
-  { step: "Step 3", title: "Professional Features", text: "JWT Auth, Roles (Admin/Staff/Volunteer), Reports, CSV Export, User Admin", status: "done" },
-];
-
-const STATUS_LABEL = { done: "Complete", next: "Up next", later: "Planned" };
-
 export default function Dashboard() {
   const { user } = useAuth();
   const [stats, setStats] = useState(null);
   const [error, setError] = useState("");
+
+  const currentRole = user?.role || "Volunteer";
 
   useEffect(() => {
     let cancelled = false;
@@ -49,8 +44,8 @@ export default function Dashboard() {
         <div>
           <h2>Welcome back, {user?.fullName || "User"}!</h2>
           <p>
-            You are signed in as <strong>{user?.role || "Volunteer"}</strong>. All NGO modules,
-            role-based permissions, automated analytics, and user administration are live.
+            You are signed in as <strong>{currentRole}</strong>. Monitor NGO activities,
+            manage team resources, and track community impact.
           </p>
         </div>
       </section>
@@ -62,6 +57,7 @@ export default function Dashboard() {
         </div>
       )}
 
+      {/* Primary Statistics Grid */}
       <section className="stat-grid" aria-label="Summary">
         {STATS.map((s) => (
           <StatCard
@@ -78,29 +74,74 @@ export default function Dashboard() {
       <div className="grid-2">
         <ConnectionTest />
 
+        {/* Role-tailored Quick Actions Card (Replaces the steps and roadmap) */}
         <section className="card">
           <div className="card__head">
             <div>
-              <h2 className="card__title">System Status & Roadmap</h2>
-              <p className="card__sub">All 3 phases implemented & operational</p>
+              <h2 className="card__title">Quick Actions & Shortcuts</h2>
+              <p className="card__sub">Tools and features for your account role ({currentRole})</p>
             </div>
           </div>
-          <ol className="roadmap">
-            {ROADMAP.map((r) => (
-              <li key={r.step} className={`roadmap__item is-${r.status}`}>
-                <span className="roadmap__dot">
-                  {r.status === "done" ? <Icon name="check" size={14} /> : null}
-                </span>
-                <div>
-                  <div className="roadmap__top">
-                    <strong>{r.step} · {r.title}</strong>
-                    <span className={`pill pill--${r.status}`}>{STATUS_LABEL[r.status]}</span>
-                  </div>
-                  <p>{r.text}</p>
+
+          <div style={{ display: "flex", flexDirection: "column", gap: "10px" }}>
+            {currentRole === "Admin" && (
+              <>
+                <Link to="/donations" className="btn btn--ghost" style={{ justifyContent: "flex-start", gap: "12px" }}>
+                  <Icon name="donations" size={18} />
+                  <span>Record New Donation</span>
+                </Link>
+                <Link to="/users" className="btn btn--ghost" style={{ justifyContent: "flex-start", gap: "12px" }}>
+                  <Icon name="users" size={18} />
+                  <span>User Administration & Permissions</span>
+                </Link>
+                <Link to="/reports" className="btn btn--ghost" style={{ justifyContent: "flex-start", gap: "12px" }}>
+                  <Icon name="reports" size={18} />
+                  <span>View Financial & Impact Reports</span>
+                </Link>
+                <Link to="/events" className="btn btn--ghost" style={{ justifyContent: "flex-start", gap: "12px" }}>
+                  <Icon name="events" size={18} />
+                  <span>Coordinate NGO Events & Drives</span>
+                </Link>
+              </>
+            )}
+
+            {currentRole === "Staff" && (
+              <>
+                <Link to="/donations" className="btn btn--ghost" style={{ justifyContent: "flex-start", gap: "12px" }}>
+                  <Icon name="donations" size={18} />
+                  <span>Record New Donation</span>
+                </Link>
+                <Link to="/beneficiaries" className="btn btn--ghost" style={{ justifyContent: "flex-start", gap: "12px" }}>
+                  <Icon name="beneficiaries" size={18} />
+                  <span>Register Beneficiary / Family</span>
+                </Link>
+                <Link to="/volunteers" className="btn btn--ghost" style={{ justifyContent: "flex-start", gap: "12px" }}>
+                  <Icon name="volunteers" size={18} />
+                  <span>Manage Volunteers & Schedules</span>
+                </Link>
+                <Link to="/reports" className="btn btn--ghost" style={{ justifyContent: "flex-start", gap: "12px" }}>
+                  <Icon name="reports" size={18} />
+                  <span>View Reports & Download CSV</span>
+                </Link>
+              </>
+            )}
+
+            {currentRole === "Volunteer" && (
+              <>
+                <Link to="/events" className="btn btn--primary" style={{ justifyContent: "flex-start", gap: "12px" }}>
+                  <Icon name="events" size={18} />
+                  <span>Browse Upcoming NGO Events & Camps</span>
+                </Link>
+                <div style={{ padding: "14px", borderRadius: "10px", background: "var(--bg)", marginTop: "6px" }}>
+                  <h4 style={{ margin: "0 0 6px", fontSize: "14px" }}>Volunteer Access</h4>
+                  <p style={{ margin: 0, fontSize: "13px", color: "var(--muted)" }}>
+                    You have access to view community drives, upcoming events, and participate in field activities.
+                    For administrative access, please contact your NGO coordinator.
+                  </p>
                 </div>
-              </li>
-            ))}
-          </ol>
+              </>
+            )}
+          </div>
         </section>
       </div>
     </div>

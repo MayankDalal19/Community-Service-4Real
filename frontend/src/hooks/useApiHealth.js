@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useState } from "react";
-import { checkApi, checkDatabase } from "../services/healthService";
+import { checkApi, checkDatabase, checkAuthSession } from "../services/healthService";
 
 const initial = { status: "loading", data: null, message: "", ms: null };
 
@@ -24,19 +24,22 @@ async function runCheck(fn) {
   }
 }
 
-// Tests React -> Express and React -> Express -> MongoDB Atlas.
+// Tests React -> Express, MongoDB Atlas, and authenticated JWT session.
 // Runs on mount; call recheck() to repeat.
 export default function useApiHealth() {
   const [api, setApi] = useState(initial);
   const [db, setDb] = useState(initial);
+  const [auth, setAuth] = useState(initial);
 
   const recheck = useCallback(async () => {
     setApi(initial);
     setDb(initial);
-    // Independent checks: a failing database must not hide a healthy API.
+    setAuth(initial);
+    // Independent checks: a failing check must not hide others.
     await Promise.all([
       runCheck(checkApi).then(setApi),
       runCheck(checkDatabase).then(setDb),
+      runCheck(checkAuthSession).then(setAuth),
     ]);
   }, []);
 
@@ -44,8 +47,9 @@ export default function useApiHealth() {
     recheck();
   }, [recheck]);
 
-  const loading = api.status === "loading" || db.status === "loading";
-  const allOk = api.status === "ok" && db.status === "ok";
+  const loading = api.status === "loading" || db.status === "loading" || auth.status === "loading";
+  const allOk = api.status === "ok" && db.status === "ok" && auth.status === "ok";
 
-  return { api, db, loading, allOk, recheck };
+  return { api, db, auth, loading, allOk, recheck };
 }
+

@@ -4,6 +4,7 @@ import RecordForm from "./RecordForm";
 import { MODULES } from "../config/modules";
 import { createCrudService } from "../services/crudService";
 import { formatDate, formatMoney } from "../utils/format";
+import { useAuth } from "../context/AuthContext";
 
 const BADGE_TONE = {
   Active: "ok", Delivered: "ok", Completed: "ok",
@@ -30,6 +31,20 @@ function renderCell(col, row) {
 
 // One page that powers all six modules, driven entirely by config/modules.js
 export default function ResourcePage({ moduleKey }) {
+  const { user } = useAuth();
+  const currentRole = user?.role || "Volunteer";
+
+  // Role permissions:
+  // - Admin: create, edit, delete on everything
+  // - Staff: create, edit; delete on operational items, but NOT on donors/donations
+  // - Volunteer: read-only access (no create, edit, or delete)
+  const canCreate = currentRole === "Admin" || currentRole === "Staff";
+  const canEdit = currentRole === "Admin" || currentRole === "Staff";
+  const canDelete =
+    currentRole === "Admin" ||
+    (currentRole === "Staff" && moduleKey !== "donors" && moduleKey !== "donations");
+  const showActions = canEdit || canDelete;
+
   const config = MODULES[moduleKey];
   const service = useMemo(() => createCrudService(config.path), [config.path]);
 
@@ -81,42 +96,54 @@ export default function ResourcePage({ moduleKey }) {
     return () => clearTimeout(t);
   }, [searchInput]);
 
-  // ---- options for dropdowns that point at another module (donor, beneficiary, volunteers) ----
+  // ---- load options for dropdowns that link to another module ----
+  const refFields = useMemo(() => config.fields.filter((f) => f.ref), [config.fields]);
+
   useEffect(() => {
-    const refFields = config.fields.filter((f) => f.ref);
+    let cancelled = false;
     refFields.forEach(async (f) => {
       try {
-        const res = await createCrudService(f.ref.path).list({ limit: 100 });
-        setRefOptions((p) => ({
-          ...p,
-          [f.name]: res.data.items.map((it) => ({ value: it._id, label: it[f.ref.labelKey] })),
-        }));
+        const s = createCrudService(f.ref.path);
+        const res = await s.list({ limit: 100 });
+        if (!cancelled) {
+          setRefOptions((prev) => ({
+            ...prev,
+            [f.name]: res.data.items.map((it) => ({ value: it._id, label: it[f.ref.labelKey] })),
+          }));
+        }
       } catch {
-        /* the form still opens; the dropdown will just be empty */
+        // Dropdown will show an empty list; user can still type or retry
       }
     });
-  }, [config.fields]);
+    return () => { cancelled = true; };
+  }, [refFields]);
 
-  // ---- toast auto-hide ----
-  useEffect(() => {
-    if (!notice) return undefined;
-    const t = setTimeout(() => setNotice(""), 4000);
-    return () => clearTimeout(t);
-  }, [notice]);
+  // ---- form handling ----
+  const openForm = (record = null) => {
+    if (!canCreate && !record) return;
+    if (!canEdit && record) return;
+    setFormError("");
+    setFormState({ record });
+  };
 
-  // ---- actions ----
-  const openForm = (record = null) => { setFormError(""); setFormState({ record }); };
-  const closeForm = useCallback(() => setFormState(null), []);
+  const closeForm = () => {
+    setFormState(null);
+    setFormError("");
+  };
 
-  const handleSave = async (payload) => {
-    const record = formState.record;
+  const handleSave = async (formData) => {
     setSaving(true);
     setFormError("");
+    const isEdit = Boolean(formState?.record);
     try {
-      if (record) await service.update(record._id, payload);
-      else await service.create(payload);
-      setFormState(null);
-      setNotice(`${config.singular} ${record ? "updated" : "added"} successfully`);
+      if (isEdit) {
+        await service.update(formState.record._id, formData);
+        setNotice(`${config.singular} updated`);
+      } else {
+        await service.create(formData);
+        setNotice(`${config.singular} created`);
+      }
+      closeForm();
       load();
     } catch (err) {
       setFormError(err.message);
@@ -126,6 +153,7 @@ export default function ResourcePage({ moduleKey }) {
   };
 
   const handleDelete = async () => {
+    if (!deleting || !canDelete) return;
     setSaving(true);
     setDeleteError("");
     try {
@@ -135,7 +163,7 @@ export default function ResourcePage({ moduleKey }) {
       if (items.length === 1 && params.page > 1) setParams((p) => ({ ...p, page: p.page - 1 }));
       else load();
     } catch (err) {
-      setDeleteError(err.message); // e.g. "This donor has donations and cannot be deleted"
+      setDeleteError(err.message);
     } finally {
       setSaving(false);
     }
@@ -151,9 +179,12 @@ export default function ResourcePage({ moduleKey }) {
             <h2 className="card__title">{config.title}</h2>
             <p className="card__sub">{config.subtitle}</p>
           </div>
-          <button type="button" className="btn btn--primary" onClick={() => openForm()}>
-            <Icon name="plus" size={18} /> Add {config.singular}
-          </button>
+          {/* Only show Add button if user has permission to create */}
+          {canCreate && (
+            <button type="button" className="btn btn--primary" onClick={() => openForm()}>
+              <Icon name="plus" size={18} /> Add {config.singular}
+            </button>
+          )}
         </div>
 
         <div className="toolbar">
@@ -188,16 +219,21 @@ export default function ResourcePage({ moduleKey }) {
             <thead>
               <tr>
                 {config.columns.map((c) => <th key={c.key}>{c.label}</th>)}
-                <th className="table__actions">Actions</th>
+                {showActions && <th className="table__actions">Actions</th>}
               </tr>
             </thead>
             <tbody>
               {loading && items.length === 0 && (
-                <tr><td colSpan={config.columns.length + 1} className="table__empty">Loading...</td></tr>
+                <tr><td colSpan={config.columns.length + (showActions ? 1 : 0)} className="table__empty">Loading...</td></tr>
               )}
               {!loading && !error && items.length === 0 && (
-                <tr><td colSpan={config.columns.length + 1} className="table__empty">
-                  {params.search || params.filter ? "No records match your search." : `No ${config.title.toLowerCase()} yet. Click "Add ${config.singular}" to create the first one.`}
+                <tr><td colSpan={config.columns.length + (showActions ? 1 : 0)} className="table__empty">
+                  {params.search || params.filter
+                    ? "No records match your search."
+                    : canCreate
+                      ? `No ${config.title.toLowerCase()} yet. Click "Add ${config.singular}" to create the first one.`
+                      : `No ${config.title.toLowerCase()} found.`
+                  }
                 </td></tr>
               )}
               {items.map((row) => (
@@ -205,53 +241,108 @@ export default function ResourcePage({ moduleKey }) {
                   {config.columns.map((c) => (
                     <td key={c.key} className={c.strong ? "is-strong" : ""}>{renderCell(c, row)}</td>
                   ))}
-                  <td className="table__actions">
-                    <button type="button" className="icon-btn" title="Edit" aria-label="Edit" onClick={() => openForm(row)}>
-                      <Icon name="edit" size={18} />
-                    </button>
-                    <button type="button" className="icon-btn icon-btn--danger" title="Delete" aria-label="Delete" onClick={() => { setDeleteError(""); setDeleting(row); }}>
-                      <Icon name="trash" size={18} />
-                    </button>
-                  </td>
+                  {showActions && (
+                    <td className="table__actions">
+                      {canEdit && (
+                        <button
+                          type="button"
+                          className="icon-btn"
+                          title="Edit"
+                          aria-label="Edit"
+                          onClick={() => openForm(row)}
+                          style={{ marginRight: canDelete ? "6px" : 0 }}
+                        >
+                          <Icon name="edit" size={18} />
+                        </button>
+                      )}
+                      {canDelete && (
+                        <button
+                          type="button"
+                          className="icon-btn icon-btn--danger"
+                          title="Delete"
+                          aria-label="Delete"
+                          onClick={() => { setDeleteError(""); setDeleting(row); }}
+                        >
+                          <Icon name="trash" size={18} />
+                        </button>
+                      )}
+                    </td>
+                  )}
                 </tr>
               ))}
             </tbody>
           </table>
         </div>
 
-        <div className="pagination">
-          <span>{total} record{total === 1 ? "" : "s"}</span>
-          <div className="pagination__btns">
-            <button type="button" className="btn btn--ghost btn--sm" disabled={page <= 1 || loading} onClick={() => setParams((p) => ({ ...p, page: p.page - 1 }))}>Previous</button>
-            <span>Page {page} of {pages}</span>
-            <button type="button" className="btn btn--ghost btn--sm" disabled={page >= pages || loading} onClick={() => setParams((p) => ({ ...p, page: p.page + 1 }))}>Next</button>
+        {total > 0 && (
+          <div className="pagination">
+            <span>
+              Showing {items.length} of {total} {config.title.toLowerCase()}
+              {pages > 1 && ` (page ${page} of ${pages})`}
+            </span>
+            {pages > 1 && (
+              <div className="pagination__btns">
+                <button
+                  type="button"
+                  className="btn btn--ghost btn--sm"
+                  disabled={page <= 1 || loading}
+                  onClick={() => setParams((p) => ({ ...p, page: p.page - 1 }))}
+                >
+                  Previous
+                </button>
+                <button
+                  type="button"
+                  className="btn btn--ghost btn--sm"
+                  disabled={page >= pages || loading}
+                  onClick={() => setParams((p) => ({ ...p, page: p.page + 1 }))}
+                >
+                  Next
+                </button>
+              </div>
+            )}
           </div>
-        </div>
+        )}
       </section>
 
-      {formState && (
+      {/* Add / Edit modal */}
+      {formState && canCreate && (
         <RecordForm
           config={config}
-          record={formState.record}
+          initial={formState.record}
           refOptions={refOptions}
           saving={saving}
           error={formError}
-          onSubmit={handleSave}
+          onSave={handleSave}
           onClose={closeForm}
         />
       )}
 
-      {deleting && (
-        <div className="modal-backdrop" onMouseDown={(e) => e.target === e.currentTarget && !saving && setDeleting(null)}>
-          <div className="modal modal--sm" role="alertdialog" aria-modal="true">
-            <div className="modal__head"><h2>Delete {config.singular}?</h2></div>
+      {/* Delete confirmation modal */}
+      {deleting && canDelete && (
+        <div className="modal-backdrop" onClick={() => !saving && setDeleting(null)}>
+          <div className="modal modal--sm" onClick={(e) => e.stopPropagation()} role="dialog" aria-modal="true">
+            <div className="modal__head">
+              <h2>Delete {config.singular}</h2>
+              <button type="button" className="icon-btn" onClick={() => setDeleting(null)} aria-label="Close" disabled={saving}>
+                <Icon name="close" />
+              </button>
+            </div>
             <div className="modal__body">
-              <p>This permanently removes the record. This cannot be undone.</p>
-              {deleteError && <div className="banner banner--error"><Icon name="alert" size={18} /><span>{deleteError}</span></div>}
+              {deleteError ? (
+                <div className="banner banner--error"><Icon name="alert" size={18} /><span>{deleteError}</span></div>
+              ) : (
+                <p>Are you sure you want to delete this {config.singular.toLowerCase()}? This action cannot be undone.</p>
+              )}
             </div>
             <div className="modal__foot">
-              <button type="button" className="btn btn--ghost" onClick={() => setDeleting(null)} disabled={saving}>Cancel</button>
-              <button type="button" className="btn btn--danger" onClick={handleDelete} disabled={saving}>{saving ? "Deleting..." : "Delete"}</button>
+              <button type="button" className="btn btn--ghost" onClick={() => setDeleting(null)} disabled={saving}>
+                {deleteError ? "Close" : "Cancel"}
+              </button>
+              {!deleteError && (
+                <button type="button" className="btn btn--danger" onClick={handleDelete} disabled={saving}>
+                  {saving ? "Deleting..." : "Delete"}
+                </button>
+              )}
             </div>
           </div>
         </div>

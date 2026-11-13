@@ -9,7 +9,15 @@ import Dashboard from "./pages/Dashboard";
 import Reports from "./pages/Reports";
 import Users from "./pages/Users";
 import NotFound from "./pages/NotFound";
-import { MODULE_KEYS, MODULES } from "./config/modules";
+import { MODULES } from "./config/modules";
+
+const OPERATIONAL_MODULE_KEYS = [
+  "volunteers",
+  "donors",
+  "donations",
+  "beneficiaries",
+  "assistance",
+];
 
 export default function App() {
   return (
@@ -22,19 +30,25 @@ export default function App() {
         {/* Protected app shell - requires authenticated user */}
         <Route element={<ProtectedRoute />}>
           <Route element={<DashboardLayout />}>
+            {/* Dashboard (all authenticated roles) */}
             <Route path="/dashboard" element={<Dashboard />} />
 
-            {/* Core NGO CRUD modules */}
-            {MODULE_KEYS.map((key) => (
-              <Route
-                key={key}
-                path={`/${MODULES[key].path}`}
-                element={<ResourcePage key={key} moduleKey={key} />}
-              />
-            ))}
+            {/* Events module (All roles: Admin, Staff, and Volunteer) */}
+            <Route
+              path={`/${MODULES.events.path}`}
+              element={<ResourcePage key="events" moduleKey="events" />}
+            />
 
-            {/* Reports & Analytics (Admin and Staff) */}
+            {/* Core NGO Management modules (Admin and Staff only) */}
             <Route element={<ProtectedRoute allowedRoles={["Admin", "Staff"]} />}>
+              {OPERATIONAL_MODULE_KEYS.map((key) => (
+                <Route
+                  key={key}
+                  path={`/${MODULES[key].path}`}
+                  element={<ResourcePage key={key} moduleKey={key} />}
+                />
+              ))}
+              {/* Reports & Analytics */}
               <Route path="/reports" element={<Reports />} />
             </Route>
 

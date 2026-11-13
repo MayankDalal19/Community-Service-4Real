@@ -4,16 +4,21 @@ import StatusRow from "./StatusRow";
 import useApiHealth from "../hooks/useApiHealth";
 import { seedMockDataApi } from "../services/healthService";
 
-// The Step 1 proof: React -> Express -> MongoDB Atlas, each link tested separately.
 export default function ConnectionTest() {
-  const { api, db, loading, allOk, recheck } = useApiHealth();
+  const { api, db, auth, loading, allOk, recheck } = useApiHealth();
   const [seeding, setSeeding] = useState(false);
   const [seedNotice, setSeedNotice] = useState("");
 
-  let banner = { tone: "loading", text: "Testing the connection..." };
-  if (!loading && allOk) banner = { tone: "ok", text: "All systems connected - React, Express and MongoDB Atlas are talking to each other." };
-  else if (!loading && api.status === "error") banner = { tone: "error", text: "The frontend cannot reach the backend. Start it with: cd backend && npm run dev" };
-  else if (!loading) banner = { tone: "error", text: "The API is running, but the database check failed. Check MONGODB_URI in backend/.env and the Atlas Network Access list." };
+  let banner = { tone: "loading", text: "Testing system connections..." };
+  if (!loading && allOk) {
+    banner = { tone: "ok", text: "All systems operational: React, Express, MongoDB Atlas, and JWT authentication." };
+  } else if (!loading && api.status === "error") {
+    banner = { tone: "error", text: "The frontend cannot reach the backend. Start it with: cd backend && npm run dev" };
+  } else if (!loading && db.status === "error") {
+    banner = { tone: "error", text: "The API is running, but MongoDB is not reachable. Check MONGODB_URI in backend/.env." };
+  } else if (!loading && auth?.status === "error") {
+    banner = { tone: "error", text: "Session authentication error: Please log in again." };
+  }
 
   const handleSeed = async (reset = false) => {
     setSeeding(true);
@@ -22,7 +27,6 @@ export default function ConnectionTest() {
       const res = await seedMockDataApi(reset);
       setSeedNotice(res.message || "Mock dataset successfully loaded!");
       recheck();
-      // Reload stats after 1 second
       setTimeout(() => {
         window.location.reload();
       }, 1200);
@@ -37,8 +41,8 @@ export default function ConnectionTest() {
     <section className="card">
       <div className="card__head">
         <div>
-          <h2 className="card__title">System Connection Test</h2>
-          <p className="card__sub">Live check of the full request flow</p>
+          <h2 className="card__title">System Status & Connectivity</h2>
+          <p className="card__sub">Live health verification of backend API, database, and auth</p>
         </div>
         <div style={{ display: "flex", gap: "8px" }}>
           {db.status === "ok" && (
@@ -98,6 +102,17 @@ export default function ConnectionTest() {
             </>
           )}
         </StatusRow>
+
+        {auth && (
+          <StatusRow icon="lock" title="JWT Authentication" endpoint="GET /api/auth/me" result={auth}>
+            {auth.data && (
+              <dl className="kv">
+                <div><dt>User</dt><dd>{auth.data.fullName}</dd></div>
+                <div><dt>Role</dt><dd>{auth.data.role}</dd></div>
+              </dl>
+            )}
+          </StatusRow>
+        )}
       </div>
     </section>
   );

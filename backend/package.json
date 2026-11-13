@@ -6,13 +6,16 @@
   "scripts": {
     "start": "node server.js",
     "dev": "nodemon server.js",
-    "seed": "node seeds/seedRoles.js"
+    "seed": "node seeds/seedAll.js",
+    "seed:reset": "node seeds/seedAll.js --reset"
   },
   "license": "ISC",
   "dependencies": {
+    "bcryptjs": "^3.0.3",
     "cors": "^2.8.5",
     "dotenv": "^16.4.5",
     "express": "^4.19.2",
+    "jsonwebtoken": "^9.0.3",
     "mongoose": "^8.7.0"
   },
   "devDependencies": {

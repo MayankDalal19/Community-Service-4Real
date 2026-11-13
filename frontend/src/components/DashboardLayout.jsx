@@ -6,6 +6,8 @@ import { MODULES } from "../config/modules";
 
 const TITLES = {
   "/dashboard": "Dashboard",
+  "/reports": "Reports & Analytics",
+  "/users": "User Administration",
   ...Object.fromEntries(Object.values(MODULES).map((m) => [`/${m.path}`, m.title])),
 };
 

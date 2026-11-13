@@ -1,6 +1,6 @@
 const mongoose = require("mongoose");
+const bcrypt = require("bcryptjs");
 
-// passwordHash is filled by bcrypt in Step 3 and never returned by default queries.
 const userSchema = new mongoose.Schema(
   {
     fullName: { type: String, required: true, trim: true, maxlength: 100 },
@@ -13,11 +13,22 @@ const userSchema = new mongoose.Schema(
       maxlength: 150,
     },
     passwordHash: { type: String, required: true, select: false },
-    // Reference to the Role document (the Mongo equivalent of a foreign key)
+    // Reference to the Role document
     role: { type: mongoose.Schema.Types.ObjectId, ref: "Role", required: true, index: true },
     isActive: { type: Boolean, default: true },
   },
   { timestamps: true }
 );
+
+// Method to verify password on a user instance
+userSchema.methods.comparePassword = async function (candidatePassword) {
+  return bcrypt.compare(candidatePassword, this.passwordHash);
+};
+
+// Static helper to hash passwords consistently
+userSchema.statics.hashPassword = async function (plainPassword) {
+  const salt = await bcrypt.genSalt(10);
+  return bcrypt.hash(plainPassword, salt);
+};
 
 module.exports = mongoose.model("User", userSchema);

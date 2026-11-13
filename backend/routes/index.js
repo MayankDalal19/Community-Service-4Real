@@ -1,20 +1,34 @@
-const express = require('express');
-const crudRouter = require('../utils/crudRouter');
-const modules = require('../controllers/modules.controller');
+const express = require("express");
+const crudRouter = require("../utils/crudRouter");
+const modules = require("../controllers/modules.controller");
+const { authenticate, authorize } = require("../middleware/auth");
 
 const router = express.Router();
 
-router.use('/health', require('./health.routes'));
-router.use('/stats', require('./stats.routes'));
+// Health check (public - used by monitoring & connection tester)
+router.use("/health", require("./health.routes"));
 
-// Step 2: core NGO modules (each gets GET/POST/PUT/DELETE)
-router.use('/volunteers', crudRouter(modules.volunteers));
-router.use('/donors', crudRouter(modules.donors));
-router.use('/donations', crudRouter(modules.donations));
-router.use('/beneficiaries', crudRouter(modules.beneficiaries));
-router.use('/assistance', crudRouter(modules.assistance));
-router.use('/events', crudRouter(modules.events));
+// Authentication routes (public login/register, protected profile/change-password)
+router.use("/auth", require("./auth.routes"));
 
-// Step 3 will add: router.use('/auth', require('./auth.routes'));
+// Dashboard statistics (requires authenticated user)
+router.use("/stats", authenticate, require("./stats.routes"));
+
+// User management (Admin only) & Role definitions
+router.use("/users", require("./user.routes"));
+
+// Analytics and export reports (Admin & Staff)
+router.use("/reports", require("./reports.routes"));
+
+// Core NGO modules (Authenticated users can read, Staff/Admin can modify, Admin only can delete critical financial docs)
+const staffOrAdmin = authorize("Admin", "Staff");
+const adminOnly = authorize("Admin");
+
+router.use("/volunteers", authenticate, crudRouter(modules.volunteers, { writeMiddleware: staffOrAdmin }));
+router.use("/donors", authenticate, crudRouter(modules.donors, { writeMiddleware: staffOrAdmin, deleteMiddleware: adminOnly }));
+router.use("/donations", authenticate, crudRouter(modules.donations, { writeMiddleware: staffOrAdmin, deleteMiddleware: adminOnly }));
+router.use("/beneficiaries", authenticate, crudRouter(modules.beneficiaries, { writeMiddleware: staffOrAdmin }));
+router.use("/assistance", authenticate, crudRouter(modules.assistance, { writeMiddleware: staffOrAdmin }));
+router.use("/events", authenticate, crudRouter(modules.events, { writeMiddleware: staffOrAdmin }));
 
 module.exports = router;

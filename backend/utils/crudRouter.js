@@ -2,9 +2,23 @@ const express = require("express");
 
 // Standard REST routes for a CRUD controller:
 //   GET /  ·  POST /  ·  GET /:id  ·  PUT /:id  ·  DELETE /:id
-module.exports = (c) => {
+module.exports = (c, options = {}) => {
   const router = express.Router();
-  router.route("/").get(c.list).post(c.create);
-  router.route("/:id").get(c.getOne).put(c.update).delete(c.remove);
+  const writeMw = options.writeMiddleware ? [options.writeMiddleware] : [];
+  const deleteMw = options.deleteMiddleware
+    ? [options.deleteMiddleware]
+    : writeMw;
+
+  router
+    .route("/")
+    .get(c.list)
+    .post(...writeMw, c.create);
+
+  router
+    .route("/:id")
+    .get(c.getOne)
+    .put(...writeMw, c.update)
+    .delete(...deleteMw, c.remove);
+
   return router;
 };

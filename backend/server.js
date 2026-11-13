@@ -1,11 +1,14 @@
-require("dotenv").config();
+const path = require("path");
+require("dotenv").config({ path: path.join(__dirname, ".env") });
 
 const express = require("express");
 const cors = require("cors");
 
 const routes = require("./routes");
 const { connectDB } = require("./config/db");
-const { ensureRoles } = require("./seeds/roles");
+const { ensureRoles, ensureAdminUser } = require("./seeds/roles");
+const { seedMockData } = require("./seeds/mockData");
+const Volunteer = require("./models/Volunteer");
 const { notFound, errorHandler } = require("./middleware/errorHandler");
 
 const app = express();
@@ -39,7 +42,18 @@ app.listen(PORT, async () => {
     await connectDB();
     console.log(`MongoDB Atlas connected  (database: ${process.env.DB_NAME || "sahyog_db"})`);
     const total = await ensureRoles();
-    console.log(`Roles ready (${total})\n`);
+    console.log(`Roles ready (${total})`);
+    await ensureAdminUser();
+    console.log(`Admin user verified`);
+
+    const hasData = await Volunteer.countDocuments();
+    if (hasData === 0) {
+      console.log(`Seeding initial mock dataset...`);
+      await seedMockData();
+      console.log(`Mock dataset ready!\n`);
+    } else {
+      console.log(`Dataset verified (${hasData} volunteers)\n`);
+    }
   } catch (err) {
     console.error(`MongoDB NOT connected: ${err.message}`);
     console.error("Check MONGODB_URI in backend/.env, your Atlas database user, and Network Access (IP allow list).\n");

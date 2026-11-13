@@ -1,4 +1,5 @@
 const Role = require("../models/Role");
+const User = require("../models/User");
 
 const INITIAL_ROLES = [
   { name: "Admin", description: "Full system access, including user and system administration" },
@@ -14,4 +15,29 @@ async function ensureRoles() {
   return Role.countDocuments();
 }
 
-module.exports = { INITIAL_ROLES, ensureRoles };
+// Ensures at least one Administrator account exists so the app can be used immediately
+async function ensureAdminUser() {
+  const adminRole = await Role.findOne({ name: "Admin" });
+  if (!adminRole) return null;
+
+  const adminEmail = (process.env.ADMIN_EMAIL || "admin@sahyog.org").toLowerCase();
+  let admin = await User.findOne({ email: adminEmail });
+
+  if (!admin) {
+    const adminPassword = process.env.ADMIN_PASSWORD || "Admin@123";
+    const passwordHash = await User.hashPassword(adminPassword);
+
+    admin = await User.create({
+      fullName: "SAHYOG Administrator",
+      email: adminEmail,
+      passwordHash,
+      role: adminRole._id,
+      isActive: true,
+    });
+    console.log(`Initial Admin created: ${adminEmail} (password: ${adminPassword})`);
+  }
+
+  return admin;
+}
+
+module.exports = { INITIAL_ROLES, ensureRoles, ensureAdminUser };

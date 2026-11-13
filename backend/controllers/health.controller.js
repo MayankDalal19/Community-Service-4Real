@@ -3,6 +3,8 @@ const Role = require("../models/Role");
 const User = require("../models/User");
 const asyncHandler = require("../utils/asyncHandler");
 const { sendSuccess, sendError } = require("../utils/apiResponse");
+const { ensureRoles, ensureAdminUser } = require("../seeds/roles");
+const { seedMockData } = require("../seeds/mockData");
 
 // GET /api/health  -> is the API alive?
 exports.checkApi = (req, res) =>
@@ -37,5 +39,30 @@ exports.checkDatabase = asyncHandler(async (req, res) => {
       totalUsers,
     },
     "Database connection successful"
+  );
+});
+
+// POST /api/health/seed  -> seed or reset mock dataset
+exports.seedMock = asyncHandler(async (req, res) => {
+  if (!isConnected()) {
+    return sendError(res, "Cannot seed: Database is not reachable", 503);
+  }
+
+  const reset = req.body?.reset === true || req.query?.reset === "true";
+  await ensureRoles();
+  await ensureAdminUser();
+  const counts = await seedMockData({ reset });
+
+  sendSuccess(
+    res,
+    {
+      counts,
+      accounts: [
+        { role: "Admin", email: "admin@sahyog.org", password: "Admin@123" },
+        { role: "Staff", email: "staff@sahyog.org", password: "Staff@123" },
+        { role: "Volunteer", email: "volunteer@sahyog.org", password: "Volunteer@123" },
+      ],
+    },
+    reset ? "Database reset and mock dataset loaded" : "Mock dataset ensured"
   );
 });

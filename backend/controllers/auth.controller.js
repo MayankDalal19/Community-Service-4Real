@@ -136,6 +136,8 @@ exports.me = asyncHandler(async (req, res) => {
       id: req.user._id,
       fullName: req.user.fullName,
       email: req.user.email,
+      phone: req.user.phone || "",
+      city: req.user.city || "",
       role: req.user.role?.name || "Volunteer",
       isActive: req.user.isActive,
       createdAt: req.user.createdAt,
@@ -146,12 +148,14 @@ exports.me = asyncHandler(async (req, res) => {
 
 // PUT /api/auth/profile
 exports.updateProfile = asyncHandler(async (req, res) => {
-  const { fullName } = req.body;
+  const { fullName, phone, city } = req.body;
   if (!fullName || !fullName.trim()) {
     return sendError(res, "Full name cannot be empty", 400);
   }
 
   req.user.fullName = fullName.trim();
+  if (phone !== undefined) req.user.phone = phone.trim();
+  if (city !== undefined) req.user.city = city.trim();
   await req.user.save();
 
   sendSuccess(
@@ -160,6 +164,8 @@ exports.updateProfile = asyncHandler(async (req, res) => {
       id: req.user._id,
       fullName: req.user.fullName,
       email: req.user.email,
+      phone: req.user.phone || "",
+      city: req.user.city || "",
       role: req.user.role?.name || "Volunteer",
     },
     "Profile updated successfully"

@@ -7,7 +7,11 @@ export default function ProfileModal({ onClose }) {
   const { user, updateUser } = useAuth();
 
   const [tab, setTab] = useState("profile"); // "profile" | "password"
-  const [fullName, setFullName] = useState(user?.fullName || "");
+  const [formData, setFormData] = useState({
+    fullName: user?.fullName || "",
+    phone: user?.phone || "",
+    city: user?.city || "",
+  });
   const [profileMsg, setProfileMsg] = useState({ error: "", success: "" });
   const [savingProfile, setSavingProfile] = useState(false);
 
@@ -18,16 +22,20 @@ export default function ProfileModal({ onClose }) {
   const handleProfileSubmit = async (e) => {
     e.preventDefault();
     setProfileMsg({ error: "", success: "" });
-    if (!fullName.trim()) {
-      setProfileMsg({ error: "Name cannot be empty", success: "" });
+    if (!formData.fullName.trim()) {
+      setProfileMsg({ error: "Full name cannot be empty", success: "" });
       return;
     }
 
     setSavingProfile(true);
     try {
-      const res = await authService.updateProfile({ fullName: fullName.trim() });
+      const res = await authService.updateProfile({
+        fullName: formData.fullName.trim(),
+        phone: formData.phone.trim(),
+        city: formData.city.trim(),
+      });
       updateUser(res.data);
-      setProfileMsg({ error: "", success: "Profile name updated successfully!" });
+      setProfileMsg({ error: "", success: "Profile details updated successfully!" });
     } catch (err) {
       setProfileMsg({ error: err.message, success: "" });
     } finally {
@@ -69,9 +77,9 @@ export default function ProfileModal({ onClose }) {
 
   return (
     <div className="modal-backdrop" onClick={onClose}>
-      <div className="modal" onClick={(e) => e.stopPropagation()} style={{ maxWidth: "500px" }}>
+      <div className="modal" onClick={(e) => e.stopPropagation()} style={{ maxWidth: "520px" }}>
         <div className="modal__head">
-          <h2>Account Settings</h2>
+          <h2>Edit Profile</h2>
           <button type="button" className="icon-btn" onClick={onClose} aria-label="Close modal">
             <Icon name="close" />
           </button>
@@ -91,7 +99,7 @@ export default function ProfileModal({ onClose }) {
               cursor: "pointer",
             }}
           >
-            Profile Info
+            Profile Information
           </button>
           <button
             type="button"
@@ -132,11 +140,10 @@ export default function ProfileModal({ onClose }) {
                   <Icon name="mail" size={18} />
                   <input type="text" value={user?.email || ""} disabled style={{ cursor: "not-allowed", opacity: 0.8 }} />
                 </div>
-                <small style={{ color: "var(--muted)", fontSize: "12px" }}>Email cannot be changed.</small>
               </div>
 
               <div className="field">
-                <label>Role</label>
+                <label>Account Role</label>
                 <div style={{ display: "flex", alignItems: "center", gap: "8px", marginTop: "4px" }}>
                   <span className={`pill pill--${user?.role === "Admin" ? "error" : user?.role === "Staff" ? "loading" : "ok"}`}>
                     <Icon name="shield" size={14} />
@@ -146,22 +153,51 @@ export default function ProfileModal({ onClose }) {
               </div>
 
               <div className="field">
-                <label htmlFor="fullName">Full Name</label>
+                <label htmlFor="modalFullName">Full Name *</label>
                 <div className="field__control">
                   <Icon name="user" size={18} />
                   <input
-                    id="fullName"
+                    id="modalFullName"
                     type="text"
-                    value={fullName}
-                    onChange={(e) => setFullName(e.target.value)}
-                    placeholder="Enter your name"
+                    required
+                    value={formData.fullName}
+                    onChange={(e) => setFormData((p) => ({ ...p, fullName: e.target.value }))}
+                    placeholder="Enter your full name"
                   />
+                </div>
+              </div>
+
+              <div className="form-grid" style={{ gap: "14px" }}>
+                <div className="field">
+                  <label htmlFor="modalPhone">Phone Number</label>
+                  <div className="field__control">
+                    <input
+                      id="modalPhone"
+                      type="tel"
+                      value={formData.phone}
+                      onChange={(e) => setFormData((p) => ({ ...p, phone: e.target.value }))}
+                      placeholder="+91 98765 43210"
+                    />
+                  </div>
+                </div>
+
+                <div className="field">
+                  <label htmlFor="modalCity">City</label>
+                  <div className="field__control">
+                    <input
+                      id="modalCity"
+                      type="text"
+                      value={formData.city}
+                      onChange={(e) => setFormData((p) => ({ ...p, city: e.target.value }))}
+                      placeholder="e.g. Mumbai"
+                    />
+                  </div>
                 </div>
               </div>
 
               <div style={{ display: "flex", justifyContent: "flex-end", marginTop: "8px" }}>
                 <button type="submit" className="btn btn--primary" disabled={savingProfile}>
-                  {savingProfile ? "Saving..." : "Save Changes"}
+                  {savingProfile ? "Saving..." : "Save Profile"}
                 </button>
               </div>
             </form>

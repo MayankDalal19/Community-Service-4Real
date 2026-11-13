@@ -12,6 +12,8 @@ const userSchema = new mongoose.Schema(
       trim: true,
       maxlength: 150,
     },
+    phone: { type: String, trim: true, maxlength: 25 },
+    city: { type: String, trim: true, maxlength: 80 },
     passwordHash: { type: String, required: true, select: false },
     // Reference to the Role document
     role: { type: mongoose.Schema.Types.ObjectId, ref: "Role", required: true, index: true },

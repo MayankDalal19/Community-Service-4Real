@@ -71,9 +71,8 @@ export default function Login() {
             securely, with the right access for every person on your team.
           </p>
           <ul>
-            <li><Icon name="check" size={16} /> Secure token-based authentication (JWT)</li>
-            <li><Icon name="check" size={16} /> Role-based access for Admin, Staff and Volunteers</li>
-            <li><Icon name="check" size={16} /> Automated reports and full CSV data export</li>
+            <li><Icon name="check" size={16} /> Sahyog: Aapka saath, unka vishwas</li>
+            <li><Icon name="check" size={16} /> Together, we make a difference.</li>
           </ul>
         </div>
         <small>Built for community impact · Supporting the UN SDGs</small>

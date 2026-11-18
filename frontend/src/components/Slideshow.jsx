@@ -35,7 +35,7 @@ const SLIDES = [
     tag: "Shelter & Winter Relief",
     title: "Warmth & Dignity: Winter Blankets & Care Packages",
     desc: "Supplying thermal winter blankets, hygiene essentials, and emergency clothing kits to unhoused individuals across city shelters.",
-    image: "https://images.unsplash.com/photo-1532629345422-7515f3d16bb9?auto=format&fit=crop&w=1200&q=80",
+    image: "https://plus.unsplash.com/premium_photo-1661964155049-f8a24a60be74?w=500&auto=format&fit=crop&q=60&ixlib=rb-4.1.0&ixid=NHwxMjA3fDA%3D",
     link: "/events",
     linkText: "Upcoming Relief Drives",
   },

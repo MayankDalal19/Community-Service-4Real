@@ -15,7 +15,7 @@ const ALL_NAV_ITEMS = [
   { label: "Users", icon: "users", to: "/users", roles: ["Admin"] },
 ];
 
-export default function Sidebar({ open, onClose }) {
+export default function Sidebar({ open, onClose, onOpenProfile }) {
   const { user } = useAuth();
   const currentRole = user?.role || "Volunteer";
 
@@ -51,11 +51,32 @@ export default function Sidebar({ open, onClose }) {
               <span>{item.label}</span>
             </NavLink>
           ))}
+
+          {/* Profile option accessible to ANY role */}
+          <button
+            type="button"
+            className="nav-item"
+            onClick={onOpenProfile}
+            style={{
+              background: "transparent",
+              border: 0,
+              width: "100%",
+              textAlign: "left",
+              cursor: "pointer",
+              font: "inherit",
+              marginTop: "8px",
+              borderTop: "1px solid rgba(255,255,255,0.1)",
+              paddingTop: "14px",
+            }}
+          >
+            <Icon name="user" size={19} />
+            <span>My Profile & Settings</span>
+          </button>
         </nav>
 
         <div className="sidebar__footer">
           <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between" }}>
-            <span>SAHYOG v1.0</span>
+            <span>SAHYOG NGO Platform</span>
             <span
               style={{
                 fontSize: "11px",
@@ -70,7 +91,6 @@ export default function Sidebar({ open, onClose }) {
               {currentRole}
             </span>
           </div>
-          <span>Full Operations & Auth Live</span>
         </div>
       </aside>
     </>

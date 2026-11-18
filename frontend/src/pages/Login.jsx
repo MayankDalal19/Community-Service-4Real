@@ -65,14 +65,13 @@ export default function Login() {
       <aside className="login__brand">
         <Logo light size={48} />
         <div className="login__pitch">
-          <h2>One place for everything your NGO does.</h2>
+          <h2>Empowering Communities Through Service.</h2>
           <p>
-            Volunteers, donors, donations, beneficiaries and events - managed together,
-            securely, with the right access for every person on your team.
+            Coordinating volunteer drives, community aid, and donations for families in need.
           </p>
           <ul>
-            <li><Icon name="check" size={16} /> Sahyog: Aapka saath, unka vishwas</li>
-            <li><Icon name="check" size={16} /> Together, we make a difference.</li>
+            <li><Icon name="check" size={16} /> Transparent aid distribution and community outreach</li>
+            <li><Icon name="check" size={16} /> Supporting education, nutrition, healthcare, and shelter</li>
           </ul>
         </div>
         <small>Built for community impact · Supporting the UN SDGs</small>

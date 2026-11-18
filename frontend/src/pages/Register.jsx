@@ -79,9 +79,9 @@ export default function Register() {
             bring meaningful social impact to communities.
           </p>
           <ul>
-            <li><Icon name="check" size={16} /> Secure token-based authentication (JWT)</li>
-            <li><Icon name="check" size={16} /> Role-tailored access for Volunteers, Staff and Admins</li>
-            <li><Icon name="check" size={16} /> Real-time NGO data coordination</li>
+            <li><Icon name="check" size={16} /> Transparent aid distribution and community outreach</li>
+            <li><Icon name="check" size={16} /> Supporting education, nutrition, healthcare, and shelter</li>
+            <li><Icon name="check" size={16} /> Serving with compassion, dignity, and real impact</li>
           </ul>
         </div>
         <small>Built for community impact · Supporting the UN SDGs</small>

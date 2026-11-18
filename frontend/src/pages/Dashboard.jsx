@@ -1,10 +1,11 @@
 import { useEffect, useState } from "react";
-import { Link } from "react-router-dom";
+import { Link, useOutletContext } from "react-router-dom";
 import StatCard from "../components/StatCard";
-import ConnectionTest from "../components/ConnectionTest";
+import Slideshow from "../components/Slideshow";
 import Icon from "../components/Icon";
 import { getStats } from "../services/statsService";
-import { formatMoney } from "../utils/format";
+import { createCrudService } from "../services/crudService";
+import { formatDate, formatMoney } from "../utils/format";
 import { useAuth } from "../context/AuthContext";
 
 const STATS = [
@@ -18,16 +19,42 @@ const STATS = [
 
 export default function Dashboard() {
   const { user } = useAuth();
+  const outletCtx = useOutletContext();
+  const onOpenProfile = outletCtx?.onOpenProfile;
+
   const [stats, setStats] = useState(null);
+  const [recentEvents, setRecentEvents] = useState([]);
+  const [loadingEvents, setLoadingEvents] = useState(true);
   const [error, setError] = useState("");
 
   const currentRole = user?.role || "Volunteer";
 
   useEffect(() => {
     let cancelled = false;
+
+    // Load summary statistics
     getStats()
-      .then((res) => !cancelled && setStats(res.data))
-      .catch((err) => !cancelled && setError(err.message));
+      .then((res) => {
+        if (!cancelled) setStats(res.data);
+      })
+      .catch((err) => {
+        if (!cancelled) setError(err.message);
+      });
+
+    // Load active community events for the records table
+    const eventService = createCrudService("events");
+    eventService
+      .list({ limit: 4 })
+      .then((res) => {
+        if (!cancelled) setRecentEvents(res.data?.items || []);
+      })
+      .catch(() => {
+        // Non-blocking if events fail to load
+      })
+      .finally(() => {
+        if (!cancelled) setLoadingEvents(false);
+      });
+
     return () => {
       cancelled = true;
     };
@@ -40,15 +67,16 @@ export default function Dashboard() {
 
   return (
     <div className="page">
+      {/* Welcome Banner - Clean and relevant */}
       <section className="welcome">
         <div>
-          <h2>Welcome back, {user?.fullName || "User"}!</h2>
-          <p>
-            You are signed in as <strong>{currentRole}</strong>. Monitor NGO activities,
-            manage team resources, and track community impact.
-          </p>
+          <h2>Welcome, {user?.fullName || "User"}</h2>
+          <p>Community service dashboard and live activity metrics.</p>
         </div>
       </section>
+
+      {/* 4 Continuous Photo Slideshow (Donations & Community Outreach) */}
+      <Slideshow canViewModules={currentRole !== "Volunteer"} />
 
       {error && (
         <div className="banner banner--error">
@@ -57,8 +85,8 @@ export default function Dashboard() {
         </div>
       )}
 
-      {/* Primary Statistics Grid */}
-      <section className="stat-grid" aria-label="Summary">
+      {/* Primary Records & Statistics Grid (Shown Below Slideshow) */}
+      <section className="stat-grid" aria-label="Summary Statistics">
         {STATS.map((s) => (
           <StatCard
             key={s.label}
@@ -71,15 +99,77 @@ export default function Dashboard() {
         ))}
       </section>
 
+      {/* Records & Active Community Drives Grid */}
       <div className="grid-2">
-        <ConnectionTest />
-
-        {/* Role-tailored Quick Actions Card (Replaces the steps and roadmap) */}
+        {/* Active Community Drives Table */}
         <section className="card">
           <div className="card__head">
             <div>
-              <h2 className="card__title">Quick Actions & Shortcuts</h2>
-              <p className="card__sub">Tools and features for your account role ({currentRole})</p>
+              <h2 className="card__title">Upcoming Community Drives</h2>
+              <p className="card__sub">Recent schedules and volunteer relief activities</p>
+            </div>
+            <Link to="/events" className="btn btn--ghost btn--sm">
+              <span>View All Events</span>
+              <Icon name="chevronRight" size={14} />
+            </Link>
+          </div>
+
+          <div className="table-wrap">
+            <table className="table">
+              <thead>
+                <tr>
+                  <th>Event / Drive</th>
+                  <th>Date</th>
+                  <th>Location</th>
+                  <th>Status</th>
+                </tr>
+              </thead>
+              <tbody>
+                {loadingEvents ? (
+                  <tr>
+                    <td colSpan={4} className="table__empty">
+                      Loading community drives...
+                    </td>
+                  </tr>
+                ) : recentEvents.length === 0 ? (
+                  <tr>
+                    <td colSpan={4} className="table__empty">
+                      No events currently scheduled.
+                    </td>
+                  </tr>
+                ) : (
+                  recentEvents.map((evt) => (
+                    <tr key={evt._id}>
+                      <td className="is-strong">{evt.title}</td>
+                      <td>{formatDate(evt.eventDate)}</td>
+                      <td>{evt.location || "-"}</td>
+                      <td>
+                        <span
+                          className={`pill pill--${
+                            evt.status === "Completed"
+                              ? "ok"
+                              : evt.status === "Cancelled"
+                              ? "error"
+                              : "loading"
+                          }`}
+                        >
+                          {evt.status}
+                        </span>
+                      </td>
+                    </tr>
+                  ))
+                )}
+              </tbody>
+            </table>
+          </div>
+        </section>
+
+        {/* Quick Record Navigation & Profile Access */}
+        <section className="card">
+          <div className="card__head">
+            <div>
+              <h2 className="card__title">Quick Navigation</h2>
+              <p className="card__sub">Direct access to records and account tools</p>
             </div>
           </div>
 
@@ -88,19 +178,19 @@ export default function Dashboard() {
               <>
                 <Link to="/donations" className="btn btn--ghost" style={{ justifyContent: "flex-start", gap: "12px" }}>
                   <Icon name="donations" size={18} />
-                  <span>Record New Donation</span>
-                </Link>
-                <Link to="/users" className="btn btn--ghost" style={{ justifyContent: "flex-start", gap: "12px" }}>
-                  <Icon name="users" size={18} />
-                  <span>User Administration & Permissions</span>
+                  <span>Donations Ledger & Receipts</span>
                 </Link>
                 <Link to="/reports" className="btn btn--ghost" style={{ justifyContent: "flex-start", gap: "12px" }}>
                   <Icon name="reports" size={18} />
-                  <span>View Financial & Impact Reports</span>
+                  <span>Financial & Aid Reports</span>
                 </Link>
-                <Link to="/events" className="btn btn--ghost" style={{ justifyContent: "flex-start", gap: "12px" }}>
-                  <Icon name="events" size={18} />
-                  <span>Coordinate NGO Events & Drives</span>
+                <Link to="/users" className="btn btn--ghost" style={{ justifyContent: "flex-start", gap: "12px" }}>
+                  <Icon name="users" size={18} />
+                  <span>User Directory & Permissions</span>
+                </Link>
+                <Link to="/volunteers" className="btn btn--ghost" style={{ justifyContent: "flex-start", gap: "12px" }}>
+                  <Icon name="volunteers" size={18} />
+                  <span>Volunteers Directory</span>
                 </Link>
               </>
             )}
@@ -109,19 +199,19 @@ export default function Dashboard() {
               <>
                 <Link to="/donations" className="btn btn--ghost" style={{ justifyContent: "flex-start", gap: "12px" }}>
                   <Icon name="donations" size={18} />
-                  <span>Record New Donation</span>
+                  <span>Donations Ledger</span>
                 </Link>
                 <Link to="/beneficiaries" className="btn btn--ghost" style={{ justifyContent: "flex-start", gap: "12px" }}>
                   <Icon name="beneficiaries" size={18} />
-                  <span>Register Beneficiary / Family</span>
+                  <span>Beneficiaries Registry</span>
                 </Link>
-                <Link to="/volunteers" className="btn btn--ghost" style={{ justifyContent: "flex-start", gap: "12px" }}>
-                  <Icon name="volunteers" size={18} />
-                  <span>Manage Volunteers & Schedules</span>
+                <Link to="/assistance" className="btn btn--ghost" style={{ justifyContent: "flex-start", gap: "12px" }}>
+                  <Icon name="assistance" size={18} />
+                  <span>Aid Delivery Records</span>
                 </Link>
                 <Link to="/reports" className="btn btn--ghost" style={{ justifyContent: "flex-start", gap: "12px" }}>
                   <Icon name="reports" size={18} />
-                  <span>View Reports & Download CSV</span>
+                  <span>Reports & CSV Export</span>
                 </Link>
               </>
             )}
@@ -130,17 +220,21 @@ export default function Dashboard() {
               <>
                 <Link to="/events" className="btn btn--primary" style={{ justifyContent: "flex-start", gap: "12px" }}>
                   <Icon name="events" size={18} />
-                  <span>Browse Upcoming NGO Events & Camps</span>
+                  <span>Participate in NGO Events & Camps</span>
                 </Link>
-                <div style={{ padding: "14px", borderRadius: "10px", background: "var(--bg)", marginTop: "6px" }}>
-                  <h4 style={{ margin: "0 0 6px", fontSize: "14px" }}>Volunteer Access</h4>
-                  <p style={{ margin: 0, fontSize: "13px", color: "var(--muted)" }}>
-                    You have access to view community drives, upcoming events, and participate in field activities.
-                    For administrative access, please contact your NGO coordinator.
-                  </p>
-                </div>
               </>
             )}
+
+            {/* Profile edit shortcut available for ANY role */}
+            <button
+              type="button"
+              className="btn btn--ghost"
+              onClick={onOpenProfile}
+              style={{ justifyContent: "flex-start", gap: "12px", marginTop: "4px" }}
+            >
+              <Icon name="user" size={18} />
+              <span>Edit My Profile & Password</span>
+            </button>
           </div>
         </section>
       </div>

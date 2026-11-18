@@ -73,11 +73,8 @@ export default function Reports() {
     <div className="page">
       <div className="welcome">
         <div>
-          <h2>Impact & Financial Reports</h2>
-          <p>
-            Track donations, assistance delivery, volunteer engagement and download data export sheets
-            for accounting and regulatory compliance.
-          </p>
+          <h2>Community Impact & Financial Reports</h2>
+          <p>Overview of donations, assistance deliveries, and outreach activities.</p>
         </div>
       </div>
 

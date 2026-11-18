@@ -140,7 +140,7 @@ export default function Users() {
         <div className="card__head">
           <div>
             <h2 className="card__title">User Administration</h2>
-            <p className="card__sub">Manage team members, volunteer accounts and role authorizations</p>
+            <p className="card__sub">Team member and user account directory</p>
           </div>
           <button
             type="button"

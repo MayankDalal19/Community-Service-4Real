@@ -11,3 +11,6 @@ export const checkAuthSession = () => api.get("/auth/me");
 
 // POST /api/health/seed -> Seed or reset mock dataset
 export const seedMockDataApi = (reset = false) => api.post("/health/seed", { reset });
+
+// POST /api/health/clean -> Remove all seed and mock operational data
+export const cleanMockDataApi = () => api.post("/health/clean");

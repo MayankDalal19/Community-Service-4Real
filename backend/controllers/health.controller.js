@@ -5,6 +5,7 @@ const asyncHandler = require("../utils/asyncHandler");
 const { sendSuccess, sendError } = require("../utils/apiResponse");
 const { ensureRoles, ensureAdminUser } = require("../seeds/roles");
 const { seedMockData } = require("../seeds/mockData");
+const { cleanData } = require("../seeds/cleanData");
 
 // GET /api/health  -> is the API alive?
 exports.checkApi = (req, res) =>
@@ -64,5 +65,22 @@ exports.seedMock = asyncHandler(async (req, res) => {
       ],
     },
     reset ? "Database reset and mock dataset loaded" : "Mock dataset ensured"
+  );
+});
+
+// POST /api/health/clean  -> wipe operational seed/mock data
+exports.cleanMock = asyncHandler(async (req, res) => {
+  if (!isConnected()) {
+    return sendError(res, "Cannot clean: Database is not reachable", 503);
+  }
+
+  const counts = await cleanData();
+  sendSuccess(
+    res,
+    {
+      counts,
+      admin: "admin@sahyog.org",
+    },
+    "Operational seed data removed. Database is now clean."
   );
 });

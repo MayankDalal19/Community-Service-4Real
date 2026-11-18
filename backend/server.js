@@ -7,8 +7,6 @@ const cors = require("cors");
 const routes = require("./routes");
 const { connectDB } = require("./config/db");
 const { ensureRoles, ensureAdminUser } = require("./seeds/roles");
-const { seedMockData } = require("./seeds/mockData");
-const Volunteer = require("./models/Volunteer");
 const { notFound, errorHandler } = require("./middleware/errorHandler");
 
 const app = express();
@@ -44,16 +42,7 @@ app.listen(PORT, async () => {
     const total = await ensureRoles();
     console.log(`Roles ready (${total})`);
     await ensureAdminUser();
-    console.log(`Admin user verified`);
-
-    const hasData = await Volunteer.countDocuments();
-    if (hasData === 0) {
-      console.log(`Seeding initial mock dataset...`);
-      await seedMockData();
-      console.log(`Mock dataset ready!\n`);
-    } else {
-      console.log(`Dataset verified (${hasData} volunteers)\n`);
-    }
+    console.log(`Admin user verified\n`);
   } catch (err) {
     console.error(`MongoDB NOT connected: ${err.message}`);
     console.error("Check MONGODB_URI in backend/.env, your Atlas database user, and Network Access (IP allow list).\n");

@@ -143,7 +143,7 @@ export default function Login() {
             </Link>
           </p>
 
-          {/* Quick Demo Credentials Box */}
+          {/* Default Administrator Access Box */}
           <div
             style={{
               marginTop: "8px",
@@ -157,9 +157,12 @@ export default function Login() {
             }}
           >
             <span style={{ fontSize: "12px", fontWeight: 700, color: "var(--muted)", textTransform: "uppercase", letterSpacing: "0.04em" }}>
-              Quick Demo Logins (Click to fill)
+              Administrator Account
             </span>
-            <div style={{ display: "flex", flexWrap: "wrap", gap: "6px" }}>
+            <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", flexWrap: "wrap", gap: "8px" }}>
+              <div style={{ fontSize: "12px", color: "var(--text)" }}>
+                <strong>admin@sahyog.org</strong>
+              </div>
               <button
                 type="button"
                 className="btn btn--ghost btn--sm"
@@ -167,25 +170,7 @@ export default function Login() {
                 style={{ fontSize: "12px", padding: "4px 10px" }}
               >
                 <Icon name="shield" size={13} />
-                Admin
-              </button>
-              <button
-                type="button"
-                className="btn btn--ghost btn--sm"
-                onClick={() => fillCredentials("staff@sahyog.org", "Staff@123")}
-                style={{ fontSize: "12px", padding: "4px 10px" }}
-              >
-                <Icon name="user" size={13} />
-                Staff
-              </button>
-              <button
-                type="button"
-                className="btn btn--ghost btn--sm"
-                onClick={() => fillCredentials("volunteer@sahyog.org", "Volunteer@123")}
-                style={{ fontSize: "12px", padding: "4px 10px" }}
-              >
-                <Icon name="volunteers" size={13} />
-                Volunteer
+                Autofill Admin
               </button>
             </div>
           </div>

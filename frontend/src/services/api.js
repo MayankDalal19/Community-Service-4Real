@@ -11,7 +11,8 @@ const api = axios.create({
 // Request interceptor: attach JWT Bearer token if available
 api.interceptors.request.use(
   (config) => {
-    const token = localStorage.getItem("sahyog_token");
+    const token =
+      sessionStorage.getItem("sahyog_token") || localStorage.getItem("sahyog_token");
     if (token) {
       config.headers.Authorization = `Bearer ${token}`;
     }
@@ -33,6 +34,8 @@ api.interceptors.response.use(
         !error.config?.url?.includes("/auth/login") &&
         !error.config?.url?.includes("/auth/register")
       ) {
+        sessionStorage.removeItem("sahyog_token");
+        sessionStorage.removeItem("sahyog_user");
         localStorage.removeItem("sahyog_token");
         localStorage.removeItem("sahyog_user");
         window.dispatchEvent(new Event("sahyog:auth_expired"));

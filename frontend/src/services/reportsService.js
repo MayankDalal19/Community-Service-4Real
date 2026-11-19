@@ -7,7 +7,8 @@ export const reportsService = {
 
   // Download raw CSV export for a specific module
   downloadCsv: async (moduleName) => {
-    const token = localStorage.getItem("sahyog_token");
+    const token =
+      sessionStorage.getItem("sahyog_token") || localStorage.getItem("sahyog_token");
     const baseURL = import.meta.env.VITE_API_URL || "http://localhost:5000/api";
     const response = await axios.get(`${baseURL}/reports/export/${moduleName}`, {
       headers: {

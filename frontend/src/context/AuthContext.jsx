@@ -3,11 +3,17 @@ import { authService } from "../services/authService";
 
 const AuthContext = createContext(null);
 
+// Purge legacy persistent localStorage tokens so users are never automatically logged in as Admin on site visits
+try {
+  localStorage.removeItem("sahyog_token");
+  localStorage.removeItem("sahyog_user");
+} catch {}
+
 export function AuthProvider({ children }) {
-  const [token, setToken] = useState(() => localStorage.getItem("sahyog_token") || null);
+  const [token, setToken] = useState(() => sessionStorage.getItem("sahyog_token") || null);
   const [user, setUser] = useState(() => {
     try {
-      const saved = localStorage.getItem("sahyog_user");
+      const saved = sessionStorage.getItem("sahyog_user");
       return saved ? JSON.parse(saved) : null;
     } catch {
       return null;
@@ -15,12 +21,12 @@ export function AuthProvider({ children }) {
   });
   const [loading, setLoading] = useState(true);
 
-  // Validate existing token on initial application load
+  // Validate existing session token on application load
   useEffect(() => {
     let mounted = true;
 
     async function checkAuth() {
-      const storedToken = localStorage.getItem("sahyog_token");
+      const storedToken = sessionStorage.getItem("sahyog_token");
       if (!storedToken) {
         if (mounted) setLoading(false);
         return;
@@ -30,13 +36,13 @@ export function AuthProvider({ children }) {
         const res = await authService.getMe();
         if (mounted && res.data) {
           setUser(res.data);
-          localStorage.setItem("sahyog_user", JSON.stringify(res.data));
+          sessionStorage.setItem("sahyog_user", JSON.stringify(res.data));
         }
       } catch (err) {
         console.warn("Session check failed or expired:", err.message);
         if (mounted) {
-          localStorage.removeItem("sahyog_token");
-          localStorage.removeItem("sahyog_user");
+          sessionStorage.removeItem("sahyog_token");
+          sessionStorage.removeItem("sahyog_user");
           setToken(null);
           setUser(null);
         }
@@ -63,8 +69,8 @@ export function AuthProvider({ children }) {
   const login = async (email, password) => {
     const res = await authService.login({ email, password });
     const { token: newToken, user: newUser } = res.data;
-    localStorage.setItem("sahyog_token", newToken);
-    localStorage.setItem("sahyog_user", JSON.stringify(newUser));
+    sessionStorage.setItem("sahyog_token", newToken);
+    sessionStorage.setItem("sahyog_user", JSON.stringify(newUser));
     setToken(newToken);
     setUser(newUser);
     return newUser;
@@ -73,16 +79,20 @@ export function AuthProvider({ children }) {
   const register = async (userData) => {
     const res = await authService.register(userData);
     const { token: newToken, user: newUser } = res.data;
-    localStorage.setItem("sahyog_token", newToken);
-    localStorage.setItem("sahyog_user", JSON.stringify(newUser));
+    sessionStorage.setItem("sahyog_token", newToken);
+    sessionStorage.setItem("sahyog_user", JSON.stringify(newUser));
     setToken(newToken);
     setUser(newUser);
     return newUser;
   };
 
   const logout = () => {
-    localStorage.removeItem("sahyog_token");
-    localStorage.removeItem("sahyog_user");
+    sessionStorage.removeItem("sahyog_token");
+    sessionStorage.removeItem("sahyog_user");
+    try {
+      localStorage.removeItem("sahyog_token");
+      localStorage.removeItem("sahyog_user");
+    } catch {}
     setToken(null);
     setUser(null);
   };
@@ -90,7 +100,7 @@ export function AuthProvider({ children }) {
   const updateUser = (updated) => {
     setUser((prev) => {
       const next = { ...prev, ...updated };
-      localStorage.setItem("sahyog_user", JSON.stringify(next));
+      sessionStorage.setItem("sahyog_user", JSON.stringify(next));
       return next;
     });
   };

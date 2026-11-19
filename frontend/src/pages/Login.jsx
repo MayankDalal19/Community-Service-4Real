@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Link, useLocation, useNavigate } from "react-router-dom";
 import Logo from "../components/Logo";
 import Icon from "../components/Icon";
@@ -9,7 +9,7 @@ const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 export default function Login() {
   const navigate = useNavigate();
   const location = useLocation();
-  const { login } = useAuth();
+  const { login, logout, token, user } = useAuth();
 
   const [form, setForm] = useState({ email: "", password: "" });
   const [errors, setErrors] = useState({});
@@ -18,6 +18,13 @@ export default function Login() {
   const [serverError, setServerError] = useState("");
 
   const from = location.state?.from?.pathname || "/dashboard";
+
+  // Arriving on the login page clears any lingering session so the user must log in explicitly
+  useEffect(() => {
+    if (token || user) {
+      logout();
+    }
+  }, []);
 
   const handleChange = (e) => {
     const { name, value } = e.target;

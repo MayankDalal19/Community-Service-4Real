@@ -60,13 +60,6 @@ export default function Login() {
     }
   };
 
-  // Quick fill demo role credentials helper
-  const fillCredentials = (email, password) => {
-    setForm({ email, password });
-    setErrors({});
-    setServerError("");
-  };
-
   return (
     <div className="login">
       <aside className="login__brand">
@@ -149,38 +142,6 @@ export default function Login() {
               Create an account
             </Link>
           </p>
-
-          {/* Default Administrator Access Box */}
-          <div
-            style={{
-              marginTop: "8px",
-              padding: "12px 14px",
-              borderRadius: "10px",
-              border: "1px dashed var(--border)",
-              background: "#fafcfb",
-              display: "flex",
-              flexDirection: "column",
-              gap: "8px",
-            }}
-          >
-            <span style={{ fontSize: "12px", fontWeight: 700, color: "var(--muted)", textTransform: "uppercase", letterSpacing: "0.04em" }}>
-              Administrator Account
-            </span>
-            <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", flexWrap: "wrap", gap: "8px" }}>
-              <div style={{ fontSize: "12px", color: "var(--text)" }}>
-                <strong>admin@sahyog.org</strong>
-              </div>
-              <button
-                type="button"
-                className="btn btn--ghost btn--sm"
-                onClick={() => fillCredentials("admin@sahyog.org", "Admin@123")}
-                style={{ fontSize: "12px", padding: "4px 10px" }}
-              >
-                <Icon name="shield" size={13} />
-                Autofill Admin
-              </button>
-            </div>
-          </div>
         </form>
       </main>
     </div>

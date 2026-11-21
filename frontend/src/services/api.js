@@ -2,8 +2,14 @@ import axios from "axios";
 
 // One centralized Axios instance. Every request in the app goes through this,
 // so base URL, timeout, headers, and the JWT token live in ONE place.
+const defaultBaseURL =
+  import.meta.env.VITE_API_URL ||
+  (import.meta.env.MODE === "production"
+    ? "https://community-backend-f8cn.onrender.com/api"
+    : "http://localhost:5000/api");
+
 const api = axios.create({
-  baseURL: import.meta.env.VITE_API_URL || "http://localhost:5000/api",
+  baseURL: defaultBaseURL,
   timeout: 10000,
   headers: { "Content-Type": "application/json" },
 });

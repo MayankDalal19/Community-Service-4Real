@@ -12,11 +12,49 @@ const { notFound, errorHandler } = require("./middleware/errorHandler");
 const app = express();
 const PORT = process.env.PORT || 5000;
 
-// ---- Global middleware ----
+// ---- CORS Configuration ----
+const allowedOrigins = [
+  "http://localhost:5173",
+  "http://127.0.0.1:5173",
+  "http://localhost:3000",
+];
+
+if (process.env.CLIENT_URL) {
+  process.env.CLIENT_URL.split(",").forEach((item) => {
+    const cleaned = item.trim().replace(/\/+$/, "");
+    if (cleaned && !allowedOrigins.includes(cleaned)) {
+      allowedOrigins.push(cleaned);
+    }
+  });
+}
+
 app.use(
   cors({
-    origin: process.env.CLIENT_URL || "http://localhost:5173",
+    origin: (origin, callback) => {
+      // Allow requests with no origin (mobile apps, Postman, curl, server-to-server)
+      if (!origin) return callback(null, true);
+
+      const normalized = origin.replace(/\/+$/, "");
+
+      try {
+        const hostname = new URL(origin).hostname;
+        // Accept explicitly configured origins or any *.vercel.app deployment
+        if (allowedOrigins.includes(normalized) || hostname.endsWith(".vercel.app")) {
+          return callback(null, true);
+        }
+      } catch {
+        // Fallback simple string check if URL parsing fails
+        if (allowedOrigins.includes(normalized) || normalized.includes(".vercel.app")) {
+          return callback(null, true);
+        }
+      }
+
+      console.warn(`[CORS] Blocked request from unauthorized origin: ${origin}`);
+      return callback(new Error(`CORS blocked for origin: ${origin}`));
+    },
     credentials: true,
+    methods: ["GET", "POST", "PUT", "DELETE", "PATCH", "OPTIONS"],
+    allowedHeaders: ["Content-Type", "Authorization"],
   })
 );
 app.use(express.json());

@@ -9,7 +9,11 @@ export const reportsService = {
   downloadCsv: async (moduleName) => {
     const token =
       sessionStorage.getItem("sahyog_token") || localStorage.getItem("sahyog_token");
-    const baseURL = import.meta.env.VITE_API_URL || "http://localhost:5000/api";
+    const baseURL =
+      import.meta.env.VITE_API_URL ||
+      (import.meta.env.MODE === "production"
+        ? "https://community-backend-f8cn.onrender.com/api"
+        : "http://localhost:5000/api");
     const response = await axios.get(`${baseURL}/reports/export/${moduleName}`, {
       headers: {
         Authorization: token ? `Bearer ${token}` : "",

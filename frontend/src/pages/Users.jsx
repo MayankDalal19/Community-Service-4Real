@@ -98,9 +98,10 @@ export default function Users() {
     setFormError("");
     setSaving(true);
     try {
+      const targetRoleId = editingUser.roleId || (editingUser.role?._id ? String(editingUser.role._id) : undefined);
       await userService.updateUser(editingUser._id, {
         fullName: editingUser.fullName,
-        roleId: editingUser.role?._id || editingUser.roleId,
+        roleId: targetRoleId,
         isActive: editingUser.isActive,
       });
       setEditingUser(null);
@@ -110,6 +111,16 @@ export default function Users() {
       setFormError(err.message);
     } finally {
       setSaving(false);
+    }
+  };
+
+  const handleQuickRoleChange = async (userId, newRoleId, userName) => {
+    try {
+      await userService.updateUser(userId, { roleId: newRoleId });
+      setNotice(`Role updated successfully for ${userName}`);
+      loadUsers(pagination.page);
+    } catch (err) {
+      setError(err.message || "Failed to update role");
     }
   };
 
@@ -227,10 +238,35 @@ export default function Users() {
                       </td>
                       <td>{u.email}</td>
                       <td>
-                        <span className={`pill ${rolePillClass(roleName)}`}>
-                          <Icon name="shield" size={12} />
-                          {roleName}
-                        </span>
+                        {isSelf ? (
+                          <span className={`pill ${rolePillClass(roleName)}`}>
+                            <Icon name="shield" size={12} />
+                            {roleName}
+                          </span>
+                        ) : (
+                          <div style={{ display: "inline-flex", alignItems: "center" }}>
+                            <select
+                              value={u.role?._id || ""}
+                              onChange={(e) => handleQuickRoleChange(u._id, e.target.value, u.fullName)}
+                              className={`pill ${rolePillClass(roleName)}`}
+                              style={{
+                                cursor: "pointer",
+                                border: "1px solid var(--border)",
+                                padding: "4px 8px",
+                                fontWeight: 600,
+                                borderRadius: "9999px",
+                                outline: "none",
+                              }}
+                              title="Click to quickly change role"
+                            >
+                              {roles.map((r) => (
+                                <option key={r._id} value={r._id}>
+                                  {r.name}
+                                </option>
+                              ))}
+                            </select>
+                          </div>
+                        )}
                       </td>
                       <td>
                         <span className={`pill ${u.isActive ? "pill--ok" : "pill--later"}`}>
@@ -246,7 +282,7 @@ export default function Users() {
                             setFormError("");
                             setEditingUser({
                               ...u,
-                              roleId: u.role?._id || "",
+                              roleId: u.role?._id ? String(u.role._id) : "",
                             });
                           }}
                           title="Edit user role and status"
@@ -442,8 +478,12 @@ export default function Users() {
                   <div className="field__control">
                     <Icon name="shield" size={18} />
                     <select
-                      value={editingUser.roleId || editingUser.role?._id}
-                      onChange={(e) => setEditingUser((u) => ({ ...u, roleId: e.target.value }))}
+                      value={editingUser.roleId || (editingUser.role?._id ? String(editingUser.role._id) : "")}
+                      onChange={(e) => {
+                        const val = e.target.value;
+                        const matched = roles.find((r) => String(r._id) === String(val));
+                        setEditingUser((u) => ({ ...u, roleId: val, role: matched || u.role }));
+                      }}
                       style={{ width: "100%", background: "transparent", border: 0, outline: 0 }}
                       disabled={currentUser?.id === editingUser._id}
                     >

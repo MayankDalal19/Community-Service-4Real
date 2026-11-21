@@ -1,3 +1,4 @@
+const mongoose = require("mongoose");
 const User = require("../models/User");
 const Role = require("../models/Role");
 const asyncHandler = require("../utils/asyncHandler");
@@ -73,9 +74,10 @@ exports.getUserById = asyncHandler(async (req, res) => {
 
 // POST /api/users (Admin user creation)
 exports.createUser = asyncHandler(async (req, res) => {
-  const { fullName, email, password, roleId } = req.body;
+  const { fullName, email, password, roleId, roleName, role: roleInput } = req.body;
 
-  if (!fullName || !email || !password || !roleId) {
+  const targetRoleInput = roleId || roleName || roleInput;
+  if (!fullName || !email || !password || !targetRoleInput) {
     return sendError(res, "All fields (Full Name, Email, Password, Role) are required", 400);
   }
 
@@ -89,7 +91,13 @@ exports.createUser = asyncHandler(async (req, res) => {
     return sendError(res, "A user with this email already exists", 409);
   }
 
-  const role = await Role.findById(roleId);
+  let role = null;
+  if (mongoose.Types.ObjectId.isValid(targetRoleInput)) {
+    role = await Role.findById(targetRoleInput);
+  }
+  if (!role) {
+    role = await Role.findOne({ name: new RegExp(`^${targetRoleInput}$`, "i") });
+  }
   if (!role) {
     return sendError(res, "Specified role does not exist", 400);
   }
@@ -109,14 +117,14 @@ exports.createUser = asyncHandler(async (req, res) => {
 
 // PUT /api/users/:id
 exports.updateUser = asyncHandler(async (req, res) => {
-  const { fullName, roleId, isActive } = req.body;
+  const { fullName, roleId, roleName, role: roleInput, isActive } = req.body;
   const user = await User.findById(req.params.id);
 
   if (!user) {
     return sendError(res, "User not found", 404);
   }
 
-  if (fullName) user.fullName = fullName.trim();
+  if (fullName && fullName.trim()) user.fullName = fullName.trim();
   if (typeof isActive === "boolean") {
     // Prevent an admin from deactivating themselves
     if (req.user._id.toString() === user._id.toString() && !isActive) {
@@ -125,16 +133,24 @@ exports.updateUser = asyncHandler(async (req, res) => {
     user.isActive = isActive;
   }
 
-  if (roleId) {
-    const role = await Role.findById(roleId);
-    if (!role) {
-      return sendError(res, "Invalid role", 400);
+  const targetRoleInput = roleId || roleName || roleInput;
+  if (targetRoleInput) {
+    let roleDoc = null;
+    if (mongoose.Types.ObjectId.isValid(targetRoleInput)) {
+      roleDoc = await Role.findById(targetRoleInput);
     }
-    // Prevent an admin from changing their own role
-    if (req.user._id.toString() === user._id.toString() && role.name !== "Admin") {
+    if (!roleDoc) {
+      roleDoc = await Role.findOne({ name: new RegExp(`^${targetRoleInput}$`, "i") });
+    }
+    if (!roleDoc) {
+      return sendError(res, "Invalid role specified", 400);
+    }
+
+    // Prevent an admin from removing their own Admin role
+    if (req.user._id.toString() === user._id.toString() && roleDoc.name !== "Admin") {
       return sendError(res, "You cannot remove your own Admin role", 400);
     }
-    user.role = role._id;
+    user.role = roleDoc._id;
   }
 
   await user.save();

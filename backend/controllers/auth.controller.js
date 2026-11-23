@@ -46,6 +46,19 @@ exports.login = asyncHandler(async (req, res) => {
     return sendError(res, "Invalid email or password", 401);
   }
 
+  // Self-heal: ensure user has a valid populated role
+  if (!user.role || !user.role.name) {
+    const adminEmail = (process.env.ADMIN_EMAIL || "admin@sahyog.org").toLowerCase();
+    const fallbackName = normalizedEmail === adminEmail ? "Admin" : "Volunteer";
+    let roleDoc = await Role.findOne({ name: new RegExp(`^${fallbackName}$`, "i") });
+    if (!roleDoc) {
+      roleDoc = await Role.create({ name: fallbackName, description: `${fallbackName} role` });
+    }
+    user.role = roleDoc;
+    await User.updateOne({ _id: user._id }, { role: roleDoc._id }).catch(() => {});
+  }
+
+  const roleName = typeof user.role === "string" ? user.role : (user.role?.name || "Volunteer");
   const token = generateToken(user);
 
   sendSuccess(
@@ -56,7 +69,7 @@ exports.login = asyncHandler(async (req, res) => {
         id: user._id,
         fullName: user.fullName,
         email: user.email,
-        role: user.role ? user.role.name : "Volunteer",
+        role: roleName,
       },
     },
     "Logged in successfully"
@@ -89,14 +102,13 @@ exports.register = asyncHandler(async (req, res) => {
   const userCount = await User.countDocuments();
   let targetRoleName = userCount === 0 ? "Admin" : (roleName || "Volunteer");
 
-  // Lookup role
-  let roleDoc = await Role.findOne({ name: targetRoleName });
+  // Lookup role case-insensitively or create it if missing
+  let roleDoc = await Role.findOne({ name: new RegExp(`^${targetRoleName}$`, "i") });
   if (!roleDoc) {
-    // Fallback to Volunteer or create if missing
-    roleDoc = await Role.findOne({ name: "Volunteer" });
-    if (!roleDoc) {
-      roleDoc = await Role.create({ name: "Volunteer", description: "Default volunteer role" });
-    }
+    roleDoc = await Role.create({
+      name: targetRoleName,
+      description: `${targetRoleName} role`,
+    });
   }
 
   const passwordHash = await User.hashPassword(password);
@@ -120,7 +132,7 @@ exports.register = asyncHandler(async (req, res) => {
         id: populatedUser._id,
         fullName: populatedUser.fullName,
         email: populatedUser.email,
-        role: populatedUser.role.name,
+        role: roleDoc.name,
       },
     },
     "User registered successfully",
@@ -130,6 +142,10 @@ exports.register = asyncHandler(async (req, res) => {
 
 // GET /api/auth/me
 exports.me = asyncHandler(async (req, res) => {
+  const roleName = req.user.role
+    ? (typeof req.user.role === "string" ? req.user.role : req.user.role.name || "Volunteer")
+    : (req.decodedToken?.role || "Volunteer");
+
   sendSuccess(
     res,
     {
@@ -138,7 +154,7 @@ exports.me = asyncHandler(async (req, res) => {
       email: req.user.email,
       phone: req.user.phone || "",
       city: req.user.city || "",
-      role: req.user.role?.name || "Volunteer",
+      role: roleName,
       isActive: req.user.isActive,
       createdAt: req.user.createdAt,
     },

@@ -12,7 +12,7 @@ export const reportsService = {
     const baseURL =
       import.meta.env.VITE_API_URL ||
       (import.meta.env.MODE === "production"
-        ? "https://community-backend-f8cn.onrender.com/api"
+        ? "https://community-service-4real.onrender.com/api"
         : "http://localhost:5000/api");
     const response = await axios.get(`${baseURL}/reports/export/${moduleName}`, {
       headers: {

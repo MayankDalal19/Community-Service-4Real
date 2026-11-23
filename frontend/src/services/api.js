@@ -5,12 +5,12 @@ import axios from "axios";
 const defaultBaseURL =
   import.meta.env.VITE_API_URL ||
   (import.meta.env.MODE === "production"
-    ? "https://community-backend-f8cn.onrender.com/api"
+    ? "https://community-service-4real.onrender.com/api"
     : "http://localhost:5000/api");
 
 const api = axios.create({
   baseURL: defaultBaseURL,
-  timeout: 10000,
+  timeout: 30000, // Render free tier can take ~30s to wake up
   headers: { "Content-Type": "application/json" },
 });
 

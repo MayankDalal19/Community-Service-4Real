@@ -17,7 +17,8 @@ const donationSchema = new mongoose.Schema(
 donationSchema.pre("validate", function () {
   if (this.isNew && !this.receiptNo) {
     const d = new Date().toISOString().slice(0, 10).replace(/-/g, "");
-    this.receiptNo = `SAH-${d}-${Math.floor(1000 + Math.random() * 9000)}`;
+    const rand = Math.random().toString(36).slice(2, 6).toUpperCase();
+    this.receiptNo = `SAH-${d}-${Date.now().toString().slice(-5)}${rand}`;
   }
 });
 

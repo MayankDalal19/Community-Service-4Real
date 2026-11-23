@@ -17,10 +17,10 @@ const ALL_NAV_ITEMS = [
 
 export default function Sidebar({ open, onClose, onOpenProfile }) {
   const { user } = useAuth();
-  const currentRole = user?.role || "Volunteer";
+  const currentRole = ((typeof user?.role === "object" ? user?.role?.name : user?.role) || "Volunteer").trim().toLowerCase();
 
   const visibleItems = ALL_NAV_ITEMS.filter((item) =>
-    !item.roles || item.roles.includes(currentRole)
+    !item.roles || item.roles.some((r) => r.toLowerCase() === currentRole)
   );
 
   return (

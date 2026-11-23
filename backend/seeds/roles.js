@@ -35,9 +35,40 @@ async function ensureAdminUser() {
       isActive: true,
     });
     console.log(`Initial Admin created: ${adminEmail} (password: ${adminPassword})`);
+  } else if (!admin.role || String(admin.role) !== String(adminRole._id)) {
+    admin.role = adminRole._id;
+    await admin.save();
+    console.log(`Administrator role synced for: ${adminEmail}`);
   }
 
   return admin;
 }
 
-module.exports = { INITIAL_ROLES, ensureRoles, ensureAdminUser };
+// Ensures a default Staff account exists so operational testing works immediately
+async function ensureStaffUser() {
+  const staffRole = await Role.findOne({ name: "Staff" });
+  if (!staffRole) return null;
+
+  const staffEmail = "staff@sahyog.org";
+  let staff = await User.findOne({ email: staffEmail });
+
+  if (!staff) {
+    const passwordHash = await User.hashPassword("Staff@123");
+    staff = await User.create({
+      fullName: "Priya Sharma (Staff)",
+      email: staffEmail,
+      passwordHash,
+      role: staffRole._id,
+      isActive: true,
+    });
+    console.log(`Initial Staff created: ${staffEmail} (password: Staff@123)`);
+  } else if (!staff.role || String(staff.role) !== String(staffRole._id)) {
+    staff.role = staffRole._id;
+    await staff.save();
+    console.log(`Staff role synced for: ${staffEmail}`);
+  }
+
+  return staff;
+}
+
+module.exports = { INITIAL_ROLES, ensureRoles, ensureAdminUser, ensureStaffUser };

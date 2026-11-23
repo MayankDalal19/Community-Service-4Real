@@ -52,7 +52,7 @@ export default function Navbar({ title, onMenuClick, onOpenProfile }) {
           <span className="user-chip__avatar">{initial}</span>
           <div className="user-chip__info">
             <span className="user-chip__name">{user?.fullName || "User"}</span>
-            <span className="user-chip__role">{user?.role || "Volunteer"}</span>
+            <span className="user-chip__role">{(typeof user?.role === "object" ? user?.role?.name : user?.role) || "Volunteer"}</span>
           </div>
         </button>
 

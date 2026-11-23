@@ -32,17 +32,20 @@ function renderCell(col, row) {
 // One page that powers all six modules, driven entirely by config/modules.js
 export default function ResourcePage({ moduleKey }) {
   const { user } = useAuth();
-  const currentRole = user?.role || "Volunteer";
+  const roleName = (typeof user?.role === "object" ? user?.role?.name : user?.role) || "Volunteer";
+  const normalizedRole = roleName.trim().toLowerCase();
 
   // Role permissions:
   // - Admin: create, edit, delete on everything
   // - Staff: create, edit; delete on operational items, but NOT on donors/donations
   // - Volunteer: read-only access (no create, edit, or delete)
-  const canCreate = currentRole === "Admin" || currentRole === "Staff";
-  const canEdit = currentRole === "Admin" || currentRole === "Staff";
+  const isAdmin = normalizedRole === "admin";
+  const isStaff = normalizedRole === "staff";
+  const canCreate = isAdmin || isStaff;
+  const canEdit = isAdmin || isStaff;
   const canDelete =
-    currentRole === "Admin" ||
-    (currentRole === "Staff" && moduleKey !== "donors" && moduleKey !== "donations");
+    isAdmin ||
+    (isStaff && moduleKey !== "donors" && moduleKey !== "donations");
   const showActions = canEdit || canDelete;
 
   const config = MODULES[moduleKey];
@@ -305,14 +308,15 @@ export default function ResourcePage({ moduleKey }) {
       </section>
 
       {/* Add / Edit modal */}
-      {formState && canCreate && (
+      {formState && (canCreate || canEdit) && (
         <RecordForm
+          key={formState.record?._id || "new"}
           config={config}
-          initial={formState.record}
+          record={formState.record}
           refOptions={refOptions}
           saving={saving}
           error={formError}
-          onSave={handleSave}
+          onSubmit={handleSave}
           onClose={closeForm}
         />
       )}

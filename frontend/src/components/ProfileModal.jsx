@@ -145,10 +145,16 @@ export default function ProfileModal({ onClose }) {
               <div className="field">
                 <label>Account Role</label>
                 <div style={{ display: "flex", alignItems: "center", gap: "8px", marginTop: "4px" }}>
-                  <span className={`pill pill--${user?.role === "Admin" ? "error" : user?.role === "Staff" ? "loading" : "ok"}`}>
-                    <Icon name="shield" size={14} />
-                    {user?.role || "Volunteer"}
-                  </span>
+                  {(() => {
+                    const r = (typeof user?.role === "object" ? user?.role?.name : user?.role) || "Volunteer";
+                    const tone = r.toLowerCase() === "admin" ? "error" : r.toLowerCase() === "staff" ? "loading" : "ok";
+                    return (
+                      <span className={`pill pill--${tone}`}>
+                        <Icon name="shield" size={14} />
+                        {r}
+                      </span>
+                    );
+                  })()}
                 </div>
               </div>
 

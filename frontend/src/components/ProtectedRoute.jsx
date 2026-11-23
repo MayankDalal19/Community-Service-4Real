@@ -23,7 +23,9 @@ export default function ProtectedRoute({ allowedRoles }) {
   }
 
   // Role-based access control
-  if (allowedRoles && (!user || !allowedRoles.includes(user.role))) {
+  const userRole = ((typeof user?.role === "object" ? user?.role?.name : user?.role) || "").trim().toLowerCase();
+  const hasAccess = !allowedRoles || allowedRoles.some((r) => r.toLowerCase() === userRole);
+  if (allowedRoles && (!user || !hasAccess)) {
     return (
       <div className="page" style={{ maxWidth: "600px", margin: "40px auto", padding: "20px" }}>
         <div className="card" style={{ textAlign: "center", padding: "40px 24px" }}>

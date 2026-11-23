@@ -9,12 +9,18 @@ try {
   localStorage.removeItem("sahyog_user");
 } catch {}
 
+function normalizeUser(u) {
+  if (!u) return null;
+  const role = typeof u.role === "object" ? u.role?.name : u.role;
+  return { ...u, role: role || "Volunteer" };
+}
+
 export function AuthProvider({ children }) {
   const [token, setToken] = useState(() => sessionStorage.getItem("sahyog_token") || null);
   const [user, setUser] = useState(() => {
     try {
       const saved = sessionStorage.getItem("sahyog_user");
-      return saved ? JSON.parse(saved) : null;
+      return saved ? normalizeUser(JSON.parse(saved)) : null;
     } catch {
       return null;
     }
@@ -35,8 +41,9 @@ export function AuthProvider({ children }) {
       try {
         const res = await authService.getMe();
         if (mounted && res.data) {
-          setUser(res.data);
-          sessionStorage.setItem("sahyog_user", JSON.stringify(res.data));
+          const normalized = normalizeUser(res.data);
+          setUser(normalized);
+          sessionStorage.setItem("sahyog_user", JSON.stringify(normalized));
         }
       } catch (err) {
         console.warn("Session check failed or expired:", err.message);
@@ -68,7 +75,8 @@ export function AuthProvider({ children }) {
 
   const login = async (email, password) => {
     const res = await authService.login({ email, password });
-    const { token: newToken, user: newUser } = res.data;
+    const { token: newToken, user: rawUser } = res.data;
+    const newUser = normalizeUser(rawUser);
     sessionStorage.setItem("sahyog_token", newToken);
     sessionStorage.setItem("sahyog_user", JSON.stringify(newUser));
     setToken(newToken);
@@ -78,7 +86,8 @@ export function AuthProvider({ children }) {
 
   const register = async (userData) => {
     const res = await authService.register(userData);
-    const { token: newToken, user: newUser } = res.data;
+    const { token: newToken, user: rawUser } = res.data;
+    const newUser = normalizeUser(rawUser);
     sessionStorage.setItem("sahyog_token", newToken);
     sessionStorage.setItem("sahyog_user", JSON.stringify(newUser));
     setToken(newToken);
@@ -99,7 +108,7 @@ export function AuthProvider({ children }) {
 
   const updateUser = (updated) => {
     setUser((prev) => {
-      const next = { ...prev, ...updated };
+      const next = normalizeUser({ ...prev, ...updated });
       sessionStorage.setItem("sahyog_user", JSON.stringify(next));
       return next;
     });

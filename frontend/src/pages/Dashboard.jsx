@@ -27,7 +27,7 @@ export default function Dashboard() {
   const [loadingEvents, setLoadingEvents] = useState(true);
   const [error, setError] = useState("");
 
-  const currentRole = user?.role || "Volunteer";
+  const currentRole = (typeof user?.role === "object" ? user?.role?.name : user?.role) || "Volunteer";
 
   useEffect(() => {
     let cancelled = false;
